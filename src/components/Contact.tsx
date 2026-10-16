@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { siteContent } from '../data/content';
 import { GoldRule } from './GoldRule';
+import { useMotionIntensity } from '../motion/hooks';
+import { MOTION_EASINGS } from '../motion/tokens';
 import { Phone, Mail, MapPin, Clock, Copy, Check } from 'lucide-react';
 
 export const Contact: React.FC = () => {
+  const intensity = useMotionIntensity();
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const copyToClipboard = (text: string, fieldName: string) => {
@@ -17,7 +21,13 @@ export const Contact: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-14">
+        <motion.div
+          className="text-center max-w-3xl mx-auto mb-14"
+          initial={intensity !== 'off' ? { opacity: 0, y: 24 } : false}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ duration: 0.6, ease: MOTION_EASINGS.default }}
+        >
           <span className="text-xs uppercase tracking-widest font-semibold text-brand-navy bg-brand-navy/10 px-3.5 py-1.5 rounded-full inline-block mb-3">
             Direct Access
           </span>
@@ -30,17 +40,43 @@ export const Contact: React.FC = () => {
           <div className="max-w-xs mx-auto">
             <GoldRule withCenterAccent />
           </div>
-        </div>
+        </motion.div>
 
-        {/* 3-Column Contact Cards */}
+        {/* 3 Contact Cards: Phone, Email, Physical Address */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
           
-          {/* Phone Card (Navy) */}
-          <div className="bg-brand-white rounded-2xl p-7 border border-brand-navy/15 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+          {/* Phone Card (Navy) with Phone Wiggle Once */}
+          <motion.div
+            initial={intensity !== 'off' ? { opacity: 0, y: 30 } : false}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.6, delay: 0.1, ease: MOTION_EASINGS.default }}
+            whileHover={{ y: -4, boxShadow: '0 14px 28px rgba(27, 42, 107, 0.12)' }}
+            className="bg-brand-white rounded-2xl p-7 border border-brand-navy/15 shadow-xs flex flex-col justify-between transition-all"
+          >
             <div>
-              <div className="w-12 h-12 rounded-xl bg-brand-navy text-brand-white flex items-center justify-center mb-5 shadow-xs">
-                <Phone className="w-6 h-6" aria-hidden="true" />
-              </div>
+              {/* Phone Icon Popping & Ring Wiggle */}
+              <motion.div
+                className="w-12 h-12 rounded-xl bg-brand-navy text-brand-white flex items-center justify-center mb-5 shadow-xs"
+                initial={intensity !== 'off' ? { scale: 0.7 } : false}
+                whileInView={{ scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, ease: MOTION_EASINGS.bounce }}
+              >
+                <motion.div
+                  initial={intensity !== 'off' ? { rotate: 0 } : false}
+                  whileInView={
+                    intensity !== 'off'
+                      ? { rotate: [0, -18, 18, -12, 12, -6, 6, 0] }
+                      : undefined
+                  }
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.5, duration: 0.8 }}
+                >
+                  <Phone className="w-6 h-6" aria-hidden="true" />
+                </motion.div>
+              </motion.div>
+
               <span className="text-xs font-semibold uppercase tracking-wider text-brand-navy/70 block mb-1">
                 Telephone & WhatsApp
               </span>
@@ -53,6 +89,7 @@ export const Contact: React.FC = () => {
               <a
                 href={`tel:${siteContent.company.phoneTel}`}
                 className="inline-block text-xl font-bold text-brand-navy hover:text-brand-purple transition-colors py-1 focus-visible:ring-2 focus-visible:ring-brand-navy rounded"
+                data-interactive="true"
               >
                 {siteContent.company.phone}
               </a>
@@ -62,6 +99,7 @@ export const Contact: React.FC = () => {
               <a
                 href={`tel:${siteContent.company.phoneTel}`}
                 className="flex-1 inline-flex items-center justify-center min-h-[44px] px-4 rounded bg-brand-navy text-brand-white text-xs font-semibold uppercase tracking-wider hover:bg-brand-navy/90 transition-colors"
+                data-interactive="true"
               >
                 Call Office
               </a>
@@ -70,18 +108,33 @@ export const Contact: React.FC = () => {
                 onClick={() => copyToClipboard(siteContent.company.phone, 'phone')}
                 aria-label="Copy phone number"
                 className="min-h-[44px] min-w-[44px] rounded border border-brand-purple/20 text-brand-navy flex items-center justify-center hover:bg-brand-offwhite transition-colors"
+                data-interactive="true"
               >
                 {copiedField === 'phone' ? <Check className="w-4 h-4 text-brand-purple" /> : <Copy className="w-4 h-4" />}
               </button>
             </div>
-          </div>
+          </motion.div>
 
           {/* Email Card (Purple) */}
-          <div className="bg-brand-white rounded-2xl p-7 border border-brand-purple/15 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+          <motion.div
+            initial={intensity !== 'off' ? { opacity: 0, y: 30 } : false}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.6, delay: 0.22, ease: MOTION_EASINGS.default }}
+            whileHover={{ y: -4, boxShadow: '0 14px 28px rgba(75, 29, 122, 0.12)' }}
+            className="bg-brand-white rounded-2xl p-7 border border-brand-purple/15 shadow-xs flex flex-col justify-between transition-all"
+          >
             <div>
-              <div className="w-12 h-12 rounded-xl bg-brand-purple text-brand-white flex items-center justify-center mb-5 shadow-xs">
+              <motion.div
+                className="w-12 h-12 rounded-xl bg-brand-purple text-brand-white flex items-center justify-center mb-5 shadow-xs"
+                initial={intensity !== 'off' ? { scale: 0.7 } : false}
+                whileInView={{ scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, ease: MOTION_EASINGS.bounce }}
+              >
                 <Mail className="w-6 h-6" aria-hidden="true" />
-              </div>
+              </motion.div>
+
               <span className="text-xs font-semibold uppercase tracking-wider text-brand-purple/80 block mb-1">
                 Electronic Mail
               </span>
@@ -94,6 +147,7 @@ export const Contact: React.FC = () => {
               <a
                 href={`mailto:${siteContent.company.email}`}
                 className="inline-block text-base sm:text-lg font-bold text-brand-purple hover:text-brand-scarlet transition-colors break-all py-1 focus-visible:ring-2 focus-visible:ring-brand-purple rounded"
+                data-interactive="true"
               >
                 {siteContent.company.email}
               </a>
@@ -103,6 +157,7 @@ export const Contact: React.FC = () => {
               <a
                 href={`mailto:${siteContent.company.email}`}
                 className="flex-1 inline-flex items-center justify-center min-h-[44px] px-4 rounded bg-brand-purple text-brand-white text-xs font-semibold uppercase tracking-wider hover:bg-brand-purple/90 transition-colors"
+                data-interactive="true"
               >
                 Send Email
               </a>
@@ -111,18 +166,33 @@ export const Contact: React.FC = () => {
                 onClick={() => copyToClipboard(siteContent.company.email, 'email')}
                 aria-label="Copy email address"
                 className="min-h-[44px] min-w-[44px] rounded border border-brand-purple/20 text-brand-purple flex items-center justify-center hover:bg-brand-offwhite transition-colors"
+                data-interactive="true"
               >
                 {copiedField === 'email' ? <Check className="w-4 h-4 text-brand-purple" /> : <Copy className="w-4 h-4" />}
               </button>
             </div>
-          </div>
+          </motion.div>
 
           {/* Physical Address Card (Scarlet accent) */}
-          <div className="bg-brand-white rounded-2xl p-7 border border-brand-scarlet/20 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+          <motion.div
+            initial={intensity !== 'off' ? { opacity: 0, y: 30 } : false}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.6, delay: 0.34, ease: MOTION_EASINGS.default }}
+            whileHover={{ y: -4, boxShadow: '0 14px 28px rgba(165, 28, 48, 0.12)' }}
+            className="bg-brand-white rounded-2xl p-7 border border-brand-scarlet/20 shadow-xs flex flex-col justify-between transition-all"
+          >
             <div>
-              <div className="w-12 h-12 rounded-xl bg-brand-scarlet text-brand-white flex items-center justify-center mb-5 shadow-xs">
+              <motion.div
+                className="w-12 h-12 rounded-xl bg-brand-scarlet text-brand-white flex items-center justify-center mb-5 shadow-xs"
+                initial={intensity !== 'off' ? { scale: 0.7 } : false}
+                whileInView={{ scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, ease: MOTION_EASINGS.bounce }}
+              >
                 <MapPin className="w-6 h-6" aria-hidden="true" />
-              </div>
+              </motion.div>
+
               <span className="text-xs font-semibold uppercase tracking-wider text-brand-scarlet block mb-1">
                 Physical Office
               </span>
@@ -145,7 +215,7 @@ export const Contact: React.FC = () => {
                 <span>{siteContent.company.hours}</span>
               </div>
             </div>
-          </div>
+          </motion.div>
 
         </div>
 

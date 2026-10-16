@@ -1,27 +1,64 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { siteContent } from '../data/content';
 import { GoldRule } from './GoldRule';
+import { AnimatedWaveDivider } from './AnimatedWaveDivider';
+import { useMotionIntensity } from '../motion/hooks';
 import { ArrowUp, Phone, Mail, MapPin } from 'lucide-react';
 
 export const Footer: React.FC = () => {
+  const intensity = useMotionIntensity();
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 300);
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <footer className="bg-brand-navy text-brand-white pt-16 pb-12 border-t-2 border-brand-gold/30 relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <footer className="bg-brand-navy text-brand-white relative overflow-hidden">
+      {/* Gentle drifting footer wave divider at top of footer */}
+      <AnimatedWaveDivider
+        className="w-full rotate-180 -mt-1 opacity-90"
+        fillBaseColor="text-brand-navy fill-current"
+      />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12 relative z-10">
         
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-brand-white/10">
           
-          {/* Brand Column (md:col-span-5) */}
+          {/* Brand Column */}
           <div className="md:col-span-5 space-y-4">
-            {/* The Logo on a White Rounded Card on dark background as required */}
-            <div className="bg-brand-white px-4 py-2.5 rounded-xl inline-block shadow-sm">
+            {/* Logo on white rounded card with 10s shimmer pass */}
+            <div className="relative bg-brand-white px-4 py-2.5 rounded-xl inline-block shadow-sm overflow-hidden">
+              {intensity !== 'off' && (
+                <motion.div
+                  className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/70 to-transparent skew-x-12 pointer-events-none"
+                  animate={{
+                    x: ['-100%', '250%'],
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    repeatDelay: 8.5, // ~10s cycle
+                    ease: 'easeInOut',
+                  }}
+                  aria-hidden="true"
+                />
+              )}
               <img
                 src="/logo-wordmark.png"
                 alt="Yacht Properties Wordmark"
-                className="h-10 sm:h-12 w-auto object-contain"
+                className="h-10 sm:h-12 w-auto object-contain relative z-10"
               />
             </div>
 
@@ -38,7 +75,7 @@ export const Footer: React.FC = () => {
             </p>
           </div>
 
-          {/* Quick Links (md:col-span-3) */}
+          {/* Quick Links */}
           <div className="md:col-span-3 space-y-3">
             <h4 className="text-xs uppercase tracking-widest font-semibold text-brand-gold mb-3">
               Navigation
@@ -49,6 +86,7 @@ export const Footer: React.FC = () => {
                   <a
                     href={item.href}
                     className="hover:text-brand-gold transition-colors focus-visible:ring-2 focus-visible:ring-brand-gold rounded py-1 inline-block"
+                    data-interactive="true"
                   >
                     {item.label}
                   </a>
@@ -58,6 +96,7 @@ export const Footer: React.FC = () => {
                 <a
                   href="#enquiry"
                   className="text-brand-scarlet hover:underline font-medium inline-block py-1"
+                  data-interactive="true"
                 >
                   Make an Enquiry &rarr;
                 </a>
@@ -65,7 +104,7 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Contact Summary (md:col-span-4) */}
+          {/* Contact Summary */}
           <div className="md:col-span-4 space-y-3">
             <h4 className="text-xs uppercase tracking-widest font-semibold text-brand-gold mb-3">
               Direct Office
@@ -76,6 +115,7 @@ export const Footer: React.FC = () => {
                 <a
                   href={`tel:${siteContent.company.phoneTel}`}
                   className="hover:text-brand-gold transition-colors"
+                  data-interactive="true"
                 >
                   {siteContent.company.phone}
                 </a>
@@ -85,6 +125,7 @@ export const Footer: React.FC = () => {
                 <a
                   href={`mailto:${siteContent.company.email}`}
                   className="hover:text-brand-gold transition-colors"
+                  data-interactive="true"
                 >
                   {siteContent.company.email}
                 </a>
@@ -95,17 +136,6 @@ export const Footer: React.FC = () => {
                   {siteContent.company.address}, {siteContent.company.city}
                 </span>
               </p>
-            </div>
-
-            <div className="pt-3">
-              <button
-                type="button"
-                onClick={scrollToTop}
-                className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-white/70 hover:text-brand-gold transition-colors min-h-[44px]"
-              >
-                <ArrowUp className="w-4 h-4" aria-hidden="true" />
-                <span>Back to top</span>
-              </button>
             </div>
           </div>
 
@@ -125,6 +155,36 @@ export const Footer: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Floating Circular Gold-outlined "Back to Top" Button */}
+      <AnimatePresence>
+        {showBackToTop && (
+          <motion.div
+            className="fixed bottom-6 right-6 z-40"
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <motion.button
+              type="button"
+              onClick={scrollToTop}
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.94 }}
+              aria-label="Back to top"
+              className="w-12 h-12 rounded-full border-2 border-brand-gold bg-brand-white text-brand-navy shadow-lg flex items-center justify-center hover:bg-brand-gold hover:text-brand-white transition-colors cursor-pointer group"
+              data-interactive="true"
+            >
+              <motion.div
+                animate={intensity !== 'off' ? { y: [0, -3, 0] } : undefined}
+                transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <ArrowUp className="w-5 h-5" aria-hidden="true" />
+              </motion.div>
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </footer>
   );
 };

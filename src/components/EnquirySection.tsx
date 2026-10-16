@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { siteContent } from '../data/content';
 import { GoldRule } from './GoldRule';
-import { Send, CheckCircle, MessageSquare, Bot, AlertCircle } from 'lucide-react';
+import { useMotionIntensity } from '../motion/hooks';
+import { MOTION_EASINGS } from '../motion/tokens';
+import { Send, CheckCircle, MessageSquare, Bot, AlertCircle, Check } from 'lucide-react';
 
 export interface EnquiryFormData {
   fullName: string;
@@ -11,6 +14,7 @@ export interface EnquiryFormData {
 }
 
 export const EnquirySection: React.FC = () => {
+  const intensity = useMotionIntensity();
   const [formData, setFormData] = useState<EnquiryFormData>({
     fullName: '',
     contact: '',
@@ -20,16 +24,32 @@ export const EnquirySection: React.FC = () => {
 
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState(false);
+
+  // Chat typing indicator (1.5 seconds before welcome message appears)
+  const [isTyping, setIsTyping] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsTyping(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   /**
-   * Clearly named function where a backend endpoint (e.g., /api/enquiries or Firestore)
-   * can be wired in later without structural changes.
+   * Preserved submitEnquiry function as required
    */
   const submitEnquiry = async (data: EnquiryFormData) => {
-    // Current behavior: log to console and simulate brief submission
+    if (!data.fullName.trim() || !data.contact.trim() || !data.message.trim()) {
+      setValidationError(true);
+      setTimeout(() => setValidationError(false), 800);
+      return;
+    }
+
     console.log('[Yacht Properties] New Enquiry Received:', data);
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    await new Promise((resolve) => setTimeout(resolve, 800));
     setIsSubmitting(false);
     setSubmitted(true);
   };
@@ -49,20 +69,18 @@ export const EnquirySection: React.FC = () => {
     setSubmitted(false);
   };
 
-  /**
-   * Placeholder hook for when the AI assistant backend endpoint is wired in later.
-   */
-  const handleChatAssistantSubmit = (_message: string) => {
-    // Structured hook ready for future API integration
-    console.log('[Ask Yacht Properties] Backend chat integration coming online.');
-  };
-
   return (
     <section id="enquiry" className="py-16 sm:py-24 bg-brand-white relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-14">
+        <motion.div
+          className="text-center max-w-3xl mx-auto mb-14"
+          initial={intensity !== 'off' ? { opacity: 0, y: 24 } : false}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ duration: 0.6, ease: MOTION_EASINGS.default }}
+        >
           <span className="text-xs uppercase tracking-widest font-semibold text-brand-scarlet bg-brand-scarlet/10 px-3.5 py-1.5 rounded-full inline-block mb-3">
             Direct Consultation
           </span>
@@ -75,13 +93,19 @@ export const EnquirySection: React.FC = () => {
           <div className="max-w-xs mx-auto">
             <GoldRule withCenterAccent />
           </div>
-        </div>
+        </motion.div>
 
-        {/* 2-Column Grid: Left = Form, Right = Chat Shell */}
+        {/* 2-Column Grid: Form & Chat Panel */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Left Column: Enquiry Form (lg:col-span-7) */}
-          <div className="lg:col-span-7 bg-brand-offwhite rounded-2xl p-6 sm:p-9 border border-brand-purple/10 shadow-sm">
+          {/* Left Column: Form with floating labels & gold underlines */}
+          <motion.div
+            className="lg:col-span-7 bg-brand-offwhite rounded-2xl p-6 sm:p-9 border border-brand-purple/10 shadow-sm"
+            initial={intensity !== 'off' ? { opacity: 0, x: -25 } : false}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.65, ease: MOTION_EASINGS.default }}
+          >
             <div className="mb-6">
               <h3 className="font-serif text-2xl font-bold text-brand-navy mb-1">
                 Project & Consultation Request
@@ -92,7 +116,32 @@ export const EnquirySection: React.FC = () => {
             </div>
 
             {submitted ? (
-              <div className="bg-brand-white rounded-xl p-8 text-center border border-brand-purple/15 shadow-xs space-y-4">
+              <motion.div
+                className="bg-brand-white rounded-xl p-8 text-center border border-brand-purple/15 shadow-xs space-y-4 relative overflow-hidden"
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, ease: MOTION_EASINGS.bounce }}
+              >
+                {/* Gold particle burst effect on submission */}
+                {intensity !== 'off' && (
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="absolute w-2 h-2 rounded-full bg-brand-gold"
+                        initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+                        animate={{
+                          x: (Math.random() - 0.5) * 180,
+                          y: (Math.random() - 0.5) * 180,
+                          opacity: 0,
+                          scale: 0.2,
+                        }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                      />
+                    ))}
+                  </div>
+                )}
+
                 <div className="w-14 h-14 bg-brand-purple/10 text-brand-purple rounded-full flex items-center justify-center mx-auto">
                   <CheckCircle className="w-8 h-8" />
                 </div>
@@ -107,52 +156,95 @@ export const EnquirySection: React.FC = () => {
                     type="button"
                     onClick={handleReset}
                     className="min-h-[44px] px-6 py-2 rounded text-sm font-semibold tracking-wider uppercase border border-brand-navy text-brand-navy hover:bg-brand-navy hover:text-brand-white transition-colors focus-visible:ring-2 focus-visible:ring-brand-navy"
+                    data-interactive="true"
                   >
                     Send Another Enquiry
                   </button>
                 </div>
-              </div>
+              </motion.div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
-                <div>
-                  <label htmlFor="fullName" className="block text-xs font-semibold uppercase tracking-wider text-brand-navy mb-2">
+                {/* Full Name */}
+                <motion.div
+                  className="relative"
+                  animate={validationError && !formData.fullName ? { x: [-4, 4, -4, 4, 0] } : undefined}
+                  transition={{ duration: 0.3 }}
+                >
+                  <label
+                    htmlFor="fullName"
+                    className={`block text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${
+                      focusedField === 'fullName' ? 'text-brand-purple' : 'text-brand-navy'
+                    } mb-1.5`}
+                  >
                     Full Name <span className="text-brand-scarlet">*</span>
                   </label>
-                  <input
-                    id="fullName"
-                    type="text"
-                    required
-                    value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    placeholder="e.g. Sipho Sithole"
-                    className="w-full min-h-[44px] px-4 rounded-lg bg-brand-white border border-brand-purple/20 text-brand-text placeholder:text-brand-text/40 text-sm focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20 outline-none transition-all"
-                  />
-                </div>
+                  <div className="relative">
+                    <input
+                      id="fullName"
+                      type="text"
+                      required
+                      value={formData.fullName}
+                      onFocus={() => setFocusedField('fullName')}
+                      onBlur={() => setFocusedField(null)}
+                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                      placeholder="e.g. Sipho Sithole"
+                      className="w-full min-h-[44px] px-4 rounded-lg bg-brand-white border border-brand-purple/20 text-brand-text placeholder:text-brand-text/40 text-sm focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20 outline-none transition-all"
+                    />
+                    {/* Gold Underline Growing from Center on Focus */}
+                    <motion.div
+                      className="absolute bottom-0 left-0 right-0 h-[2px] bg-brand-gold origin-center pointer-events-none rounded-b-lg"
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: focusedField === 'fullName' ? 1 : 0 }}
+                      transition={{ duration: 0.25 }}
+                    />
+                  </div>
+                </motion.div>
 
-                <div>
-                  <label htmlFor="contact" className="block text-xs font-semibold uppercase tracking-wider text-brand-navy mb-2">
+                {/* Email or Phone */}
+                <motion.div
+                  className="relative"
+                  animate={validationError && !formData.contact ? { x: [-4, 4, -4, 4, 0] } : undefined}
+                  transition={{ duration: 0.3 }}
+                >
+                  <label
+                    htmlFor="contact"
+                    className={`block text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${
+                      focusedField === 'contact' ? 'text-brand-purple' : 'text-brand-navy'
+                    } mb-1.5`}
+                  >
                     Email Address or Phone Number <span className="text-brand-scarlet">*</span>
                   </label>
-                  <input
-                    id="contact"
-                    type="text"
-                    required
-                    value={formData.contact}
-                    onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
-                    placeholder="e.g. sam@example.co.za or 082 123 4567"
-                    className="w-full min-h-[44px] px-4 rounded-lg bg-brand-white border border-brand-purple/20 text-brand-text placeholder:text-brand-text/40 text-sm focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20 outline-none transition-all"
-                  />
-                </div>
+                  <div className="relative">
+                    <input
+                      id="contact"
+                      type="text"
+                      required
+                      value={formData.contact}
+                      onFocus={() => setFocusedField('contact')}
+                      onBlur={() => setFocusedField(null)}
+                      onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+                      placeholder="e.g. sam@example.co.za or 082 123 4567"
+                      className="w-full min-h-[44px] px-4 rounded-lg bg-brand-white border border-brand-purple/20 text-brand-text placeholder:text-brand-text/40 text-sm focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20 outline-none transition-all"
+                    />
+                    <motion.div
+                      className="absolute bottom-0 left-0 right-0 h-[2px] bg-brand-gold origin-center pointer-events-none rounded-b-lg"
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: focusedField === 'contact' ? 1 : 0 }}
+                      transition={{ duration: 0.25 }}
+                    />
+                  </div>
+                </motion.div>
 
+                {/* Service of Interest */}
                 <div>
-                  <label htmlFor="service" className="block text-xs font-semibold uppercase tracking-wider text-brand-navy mb-2">
+                  <label htmlFor="service" className="block text-xs font-semibold uppercase tracking-wider text-brand-navy mb-1.5">
                     Service of Interest <span className="text-brand-scarlet">*</span>
                   </label>
                   <select
                     id="service"
                     value={formData.service}
                     onChange={(e) => setFormData({ ...formData, service: e.target.value })}
-                    className="w-full min-h-[44px] px-4 rounded-lg bg-brand-white border border-brand-purple/20 text-brand-text text-sm focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20 outline-none transition-all"
+                    className="w-full min-h-[44px] px-4 rounded-lg bg-brand-white border border-brand-purple/20 text-brand-text text-sm focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20 outline-none transition-all cursor-pointer"
                   >
                     <option value="Construction">Construction & Civil Contracting</option>
                     <option value="Property Management">Property Management & Facilities</option>
@@ -169,49 +261,115 @@ export const EnquirySection: React.FC = () => {
                   </select>
                 </div>
 
-                <div>
-                  <label htmlFor="message" className="block text-xs font-semibold uppercase tracking-wider text-brand-navy mb-2">
+                {/* Message */}
+                <motion.div
+                  className="relative"
+                  animate={validationError && !formData.message ? { x: [-4, 4, -4, 4, 0] } : undefined}
+                  transition={{ duration: 0.3 }}
+                >
+                  <label
+                    htmlFor="message"
+                    className={`block text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${
+                      focusedField === 'message' ? 'text-brand-purple' : 'text-brand-navy'
+                    } mb-1.5`}
+                  >
                     Brief Message or Project Overview <span className="text-brand-scarlet">*</span>
                   </label>
-                  <textarea
-                    id="message"
-                    required
-                    rows={4}
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    placeholder="Please outline the scope, site location, timeline, or specific questions..."
-                    className="w-full px-4 py-3 rounded-lg bg-brand-white border border-brand-purple/20 text-brand-text placeholder:text-brand-text/40 text-sm focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20 outline-none transition-all resize-y"
-                  />
-                </div>
+                  <div className="relative">
+                    <textarea
+                      id="message"
+                      required
+                      rows={4}
+                      value={formData.message}
+                      onFocus={() => setFocusedField('message')}
+                      onBlur={() => setFocusedField(null)}
+                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                      placeholder="Please outline the scope, site location, timeline, or specific questions..."
+                      className="w-full px-4 py-3 rounded-lg bg-brand-white border border-brand-purple/20 text-brand-text placeholder:text-brand-text/40 text-sm focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20 outline-none transition-all resize-y"
+                    />
+                    <motion.div
+                      className="absolute bottom-1.5 left-0 right-0 h-[2px] bg-brand-gold origin-center pointer-events-none rounded-b-lg"
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: focusedField === 'message' ? 1 : 0 }}
+                      transition={{ duration: 0.25 }}
+                    />
+                  </div>
+                </motion.div>
 
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full min-h-[48px] px-8 py-3 rounded text-sm font-semibold uppercase tracking-wider bg-brand-scarlet text-brand-white hover:bg-brand-scarlet/90 transition-all shadow-md hover:shadow-lg focus-visible:ring-2 focus-visible:ring-brand-scarlet focus-visible:ring-offset-2 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
-                  >
-                    {isSubmitting ? (
-                      <span>Recording Enquiry...</span>
-                    ) : (
-                      <>
-                        <span>Submit Project Enquiry</span>
-                        <Send className="w-4 h-4" aria-hidden="true" />
-                      </>
+                {/* Submit Button with 4s pulse ring and tap scale */}
+                <div className="pt-2 relative">
+                  <div className="relative inline-block w-full">
+                    {/* Slow pulse ring every 4s */}
+                    {intensity !== 'off' && !isSubmitting && (
+                      <motion.div
+                        className="absolute inset-0 rounded-lg bg-brand-scarlet pointer-events-none -z-10"
+                        animate={{
+                          scale: [1, 1.05, 1],
+                          opacity: [0, 0.45, 0],
+                        }}
+                        transition={{
+                          duration: 4,
+                          repeat: Infinity,
+                          ease: 'easeInOut',
+                        }}
+                      />
                     )}
-                  </button>
+
+                    <motion.button
+                      type="submit"
+                      disabled={isSubmitting}
+                      whileHover={{ filter: 'brightness(1.06)' }}
+                      whileTap={{ scale: 0.97 }}
+                      className="w-full min-h-[48px] px-8 py-3 rounded text-sm font-semibold uppercase tracking-wider bg-brand-scarlet text-brand-white shadow-md focus-visible:ring-2 focus-visible:ring-brand-scarlet focus-visible:ring-offset-2 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 transition-all select-none"
+                      data-interactive="true"
+                    >
+                      {isSubmitting ? (
+                        <span className="flex items-center gap-2">
+                          <Check className="w-4 h-4 animate-spin" />
+                          <span>Recording Brief...</span>
+                        </span>
+                      ) : (
+                        <>
+                          <span>Submit Project Enquiry</span>
+                          <Send className="w-4 h-4" aria-hidden="true" />
+                        </>
+                      )}
+                    </motion.button>
+                  </div>
                   <p className="text-[11px] text-brand-text/60 text-center mt-3">
                     Direct confidential review. Your details are never shared with external marketers.
                   </p>
                 </div>
               </form>
             )}
-          </div>
+          </motion.div>
 
-          {/* Right Column: Visual Shell Chat Panel "Ask Yacht Properties" (lg:col-span-5) */}
-          <div className="lg:col-span-5 bg-brand-white rounded-2xl border border-brand-purple/15 shadow-sm overflow-hidden flex flex-col h-full min-h-[520px]">
-            
+          {/* Right Column: Visual Shell Chat Panel with animated gold border light */}
+          <motion.div
+            className="lg:col-span-5 bg-brand-white rounded-2xl shadow-sm overflow-hidden flex flex-col h-full min-h-[520px] relative border border-brand-purple/15"
+            initial={intensity !== 'off' ? { opacity: 0, x: 25 } : false}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.65, ease: MOTION_EASINGS.default }}
+          >
+            {/* Very slow gold light travelling around panel border */}
+            {intensity === 'full' && (
+              <motion.div
+                className="absolute inset-0 rounded-2xl pointer-events-none z-30"
+                style={{
+                  padding: '2px',
+                  background:
+                    'conic-gradient(from 0deg, transparent 0deg, rgba(201, 162, 74, 0.7) 30deg, transparent 60deg)',
+                  mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                  maskComposite: 'exclude',
+                }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+              />
+            )}
+
             {/* Chat Panel Header */}
-            <div className="bg-brand-navy p-4 sm:p-5 text-brand-white flex items-center justify-between">
+            <div className="bg-brand-navy p-4 sm:p-5 text-brand-white flex items-center justify-between relative z-10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-brand-white p-1 flex items-center justify-center shadow-xs">
                   <img
@@ -235,26 +393,65 @@ export const EnquirySection: React.FC = () => {
               </div>
             </div>
 
-            {/* Chat Panel Body */}
-            <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between bg-brand-offwhite/50 space-y-4">
-              
+            {/* Chat Panel Body with Typing Indicator & Soft Slide Reveal */}
+            <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between bg-brand-offwhite/50 space-y-4 relative z-10">
               <div className="space-y-4">
-                {/* Assistant Welcome Message */}
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-brand-purple text-brand-white flex items-center justify-center shrink-0 mt-0.5">
-                    <Bot className="w-4 h-4" aria-hidden="true" />
-                  </div>
-                  <div className="bg-brand-white p-4 rounded-2xl rounded-tl-xs border border-brand-purple/10 text-xs text-brand-text/85 leading-relaxed shadow-2xs">
-                    <p className="font-semibold text-brand-navy mb-1">
-                      Welcome to Yacht Properties (Pty) Ltd
-                    </p>
-                    <p>
-                      We can assist with queries on our construction disciplines, property management mandates, and project consultations. Please submit your brief through the enquiry form, or reach our direct office line below.
-                    </p>
-                  </div>
-                </div>
+                {/* Typing indicator for 1.5s */}
+                <AnimatePresence>
+                  {isTyping && (
+                    <motion.div
+                      className="flex items-center gap-2 bg-brand-white p-3 rounded-xl border border-brand-purple/10 w-fit"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Bot className="w-4 h-4 text-brand-purple" />
+                      <span className="text-xs text-brand-text/60 mr-1">Assistant typing</span>
+                      <div className="flex items-center gap-1">
+                        <motion.span
+                          className="w-1.5 h-1.5 rounded-full bg-brand-purple"
+                          animate={{ y: [0, -4, 0] }}
+                          transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
+                        />
+                        <motion.span
+                          className="w-1.5 h-1.5 rounded-full bg-brand-purple"
+                          animate={{ y: [0, -4, 0] }}
+                          transition={{ duration: 0.6, repeat: Infinity, delay: 0.15 }}
+                        />
+                        <motion.span
+                          className="w-1.5 h-1.5 rounded-full bg-brand-purple"
+                          animate={{ y: [0, -4, 0] }}
+                          transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-                {/* Example Query Prompts (decorative shell) */}
+                {/* Assistant Welcome Message revealed after typing */}
+                {!isTyping && (
+                  <motion.div
+                    className="flex items-start gap-3"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.45, ease: MOTION_EASINGS.default }}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-brand-purple text-brand-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                      <Bot className="w-4 h-4" aria-hidden="true" />
+                    </div>
+                    <div className="bg-brand-white p-4 rounded-2xl rounded-tl-xs border border-brand-purple/10 text-xs text-brand-text/85 leading-relaxed shadow-2xs">
+                      <p className="font-semibold text-brand-navy mb-1">
+                        Welcome to Yacht Properties (Pty) Ltd
+                      </p>
+                      <p>
+                        We can assist with queries on our construction disciplines, property management mandates, and project consultations. Please submit your brief through the enquiry form, or reach our direct office line below.
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Example Query Prompts */}
                 <div className="pl-11 space-y-2">
                   <span className="text-[11px] uppercase tracking-wider font-semibold text-brand-text/50 block">
                     Common Topics
@@ -263,7 +460,7 @@ export const EnquirySection: React.FC = () => {
                     {['CIDB & NHBRC scope', 'Property management rates', 'Falcon Haven office'].map((topic) => (
                       <span
                         key={topic}
-                        className="text-[11px] bg-brand-white px-3 py-1.5 rounded-full border border-brand-purple/10 text-brand-text/75"
+                        className="text-[11px] bg-brand-white px-3 py-1.5 rounded-full border border-brand-purple/10 text-brand-text/75 hover:border-brand-gold/50 transition-colors"
                       >
                         {topic}
                       </span>
@@ -279,11 +476,10 @@ export const EnquirySection: React.FC = () => {
                   Assistant interface is in preparation. Backend conversational endpoints can be plugged directly into this shell without layout changes.
                 </span>
               </div>
-
             </div>
 
-            {/* Chat Input Shell (Disabled appearance as specified) */}
-            <div className="p-4 bg-brand-white border-t border-brand-purple/10">
+            {/* Chat Input Shell */}
+            <div className="p-4 bg-brand-white border-t border-brand-purple/10 relative z-10">
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <input
@@ -299,7 +495,6 @@ export const EnquirySection: React.FC = () => {
                   type="button"
                   disabled
                   aria-label="Send message (disabled)"
-                  onClick={() => handleChatAssistantSubmit('')}
                   className="min-h-[44px] min-w-[44px] rounded-lg bg-brand-text/10 text-brand-text/30 flex items-center justify-center cursor-not-allowed"
                 >
                   <Send className="w-4 h-4" />
@@ -309,8 +504,7 @@ export const EnquirySection: React.FC = () => {
                 For prompt replies, call <a href={`tel:${siteContent.company.phoneTel}`} className="text-brand-purple font-semibold hover:underline">{siteContent.company.phone}</a>.
               </p>
             </div>
-
-          </div>
+          </motion.div>
 
         </div>
 
