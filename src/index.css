@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+:root {
+  --brand-navy: #1B2A6B;
+  --brand-purple: #4B1D7A;
+  --brand-scarlet: #A51C30;
+  --brand-gold: #C9A24A;
+  --brand-white: #FFFFFF;
+  --brand-offwhite: #F7F6FA;
+  --brand-text: #1A1A2E;
+}
+
+@theme {
+  --color-brand-navy: #1B2A6B;
+  --color-brand-purple: #4B1D7A;
+  --color-brand-scarlet: #A51C30;
+  --color-brand-gold: #C9A24A;
+  --color-brand-white: #FFFFFF;
+  --color-brand-offwhite: #F7F6FA;
+  --color-brand-text: #1A1A2E;
+
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Custom soft gold halo glow for Hero Emblem only */
+.hero-halo-glow {
+  filter: drop-shadow(0 0 32px rgba(201, 162, 74, 0.35)) drop-shadow(0 0 64px rgba(201, 162, 74, 0.18));
+}
