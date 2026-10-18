@@ -5,6 +5,21 @@
 
 export type MotionIntensity = 'full' | 'lite' | 'off';
 
+/**
+ * Global motion intensity evaluation
+ * 'full': desktop with fine pointer
+ * 'lite': touch devices, tablets, and small viewports
+ * 'off': user prefers reduced motion
+ */
+export const getMotionIntensity = (): MotionIntensity => {
+  if (typeof window === 'undefined') return 'full';
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 'off';
+  if (window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 1024) return 'lite';
+  return 'full';
+};
+
+export const MOTION_INTENSITY: MotionIntensity = typeof window !== 'undefined' ? getMotionIntensity() : 'full';
+
 export const MOTION_DURATIONS = {
   fast: 0.25,
   base: 0.6,

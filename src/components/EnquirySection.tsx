@@ -38,7 +38,8 @@ export const EnquirySection: React.FC = () => {
   }, []);
 
   /**
-   * Preserved submitEnquiry function as required
+   * Clearly named function where a backend endpoint can be wired in later.
+   * Logs to console and simulates brief submission as specified.
    */
   const submitEnquiry = async (data: EnquiryFormData) => {
     if (!data.fullName.trim() || !data.contact.trim() || !data.message.trim()) {
@@ -49,7 +50,7 @@ export const EnquirySection: React.FC = () => {
 
     console.log('[Yacht Properties] New Enquiry Received:', data);
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    await new Promise((resolve) => setTimeout(resolve, 600));
     setIsSubmitting(false);
     setSubmitted(true);
   };
@@ -73,7 +74,7 @@ export const EnquirySection: React.FC = () => {
     <section id="enquiry" className="py-16 sm:py-24 bg-brand-white relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Section Header */}
+        {/* Section Header with Staggered Rise & Fade */}
         <motion.div
           className="text-center max-w-3xl mx-auto mb-14"
           initial={intensity !== 'off' ? { opacity: 0, y: 24 } : false}
@@ -98,7 +99,7 @@ export const EnquirySection: React.FC = () => {
         {/* 2-Column Grid: Form & Chat Panel */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Left Column: Form with floating labels & gold underlines */}
+          {/* Left Column: Enquiry Form with Floating Labels & Gold Underlines */}
           <motion.div
             className="lg:col-span-7 bg-brand-offwhite rounded-2xl p-6 sm:p-9 border border-brand-purple/10 shadow-sm"
             initial={intensity !== 'off' ? { opacity: 0, x: -25 } : false}
@@ -122,21 +123,21 @@ export const EnquirySection: React.FC = () => {
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.5, ease: MOTION_EASINGS.bounce }}
               >
-                {/* Gold particle burst effect on submission */}
+                {/* Gold particle burst on successful submission */}
                 {intensity !== 'off' && (
                   <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                    {Array.from({ length: 12 }).map((_, i) => (
+                    {Array.from({ length: 14 }).map((_, i) => (
                       <motion.div
                         key={i}
                         className="absolute w-2 h-2 rounded-full bg-brand-gold"
                         initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
                         animate={{
-                          x: (Math.random() - 0.5) * 180,
-                          y: (Math.random() - 0.5) * 180,
+                          x: (Math.random() - 0.5) * 200,
+                          y: (Math.random() - 0.5) * 200,
                           opacity: 0,
                           scale: 0.2,
                         }}
-                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                        transition={{ duration: 0.85, ease: 'easeOut' }}
                       />
                     ))}
                   </div>
@@ -164,7 +165,7 @@ export const EnquirySection: React.FC = () => {
               </motion.div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Full Name */}
+                {/* Full Name Field */}
                 <motion.div
                   className="relative"
                   animate={validationError && !formData.fullName ? { x: [-4, 4, -4, 4, 0] } : undefined}
@@ -190,7 +191,7 @@ export const EnquirySection: React.FC = () => {
                       placeholder="e.g. Sipho Sithole"
                       className="w-full min-h-[44px] px-4 rounded-lg bg-brand-white border border-brand-purple/20 text-brand-text placeholder:text-brand-text/40 text-sm focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/20 outline-none transition-all"
                     />
-                    {/* Gold Underline Growing from Center on Focus */}
+                    {/* Gold Underline Growing from Centre */}
                     <motion.div
                       className="absolute bottom-0 left-0 right-0 h-[2px] bg-brand-gold origin-center pointer-events-none rounded-b-lg"
                       initial={{ scaleX: 0 }}
@@ -200,7 +201,7 @@ export const EnquirySection: React.FC = () => {
                   </div>
                 </motion.div>
 
-                {/* Email or Phone */}
+                {/* Email or Phone Field */}
                 <motion.div
                   className="relative"
                   animate={validationError && !formData.contact ? { x: [-4, 4, -4, 4, 0] } : undefined}
@@ -261,7 +262,7 @@ export const EnquirySection: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Message */}
+                {/* Message Field */}
                 <motion.div
                   className="relative"
                   animate={validationError && !formData.message ? { x: [-4, 4, -4, 4, 0] } : undefined}
@@ -296,10 +297,9 @@ export const EnquirySection: React.FC = () => {
                   </div>
                 </motion.div>
 
-                {/* Submit Button with 4s pulse ring and tap scale */}
+                {/* Submit Button with Slow Pulse Ring every 4s, press scale, and checkmark morph */}
                 <div className="pt-2 relative">
                   <div className="relative inline-block w-full">
-                    {/* Slow pulse ring every 4s */}
                     {intensity !== 'off' && !isSubmitting && (
                       <motion.div
                         className="absolute inset-0 rounded-lg bg-brand-scarlet pointer-events-none -z-10"
@@ -344,7 +344,7 @@ export const EnquirySection: React.FC = () => {
             )}
           </motion.div>
 
-          {/* Right Column: Visual Shell Chat Panel with animated gold border light */}
+          {/* Right Column: Visual Shell Chat Panel "Ask Yacht Properties" */}
           <motion.div
             className="lg:col-span-5 bg-brand-white rounded-2xl shadow-sm overflow-hidden flex flex-col h-full min-h-[520px] relative border border-brand-purple/15"
             initial={intensity !== 'off' ? { opacity: 0, x: 25 } : false}
@@ -393,10 +393,10 @@ export const EnquirySection: React.FC = () => {
               </div>
             </div>
 
-            {/* Chat Panel Body with Typing Indicator & Soft Slide Reveal */}
+            {/* Chat Panel Body with 1.5s typing indicator before welcome message */}
             <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between bg-brand-offwhite/50 space-y-4 relative z-10">
               <div className="space-y-4">
-                {/* Typing indicator for 1.5s */}
+                {/* Typing indicator for 1.5 seconds */}
                 <AnimatePresence>
                   {isTyping && (
                     <motion.div
@@ -429,11 +429,11 @@ export const EnquirySection: React.FC = () => {
                   )}
                 </AnimatePresence>
 
-                {/* Assistant Welcome Message revealed after typing */}
+                {/* Assistant Welcome Message revealed after typing with soft slide & fade */}
                 {!isTyping && (
                   <motion.div
                     className="flex items-start gap-3"
-                    initial={{ opacity: 0, y: 12 }}
+                    initial={{ opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.45, ease: MOTION_EASINGS.default }}
                   >
@@ -451,7 +451,7 @@ export const EnquirySection: React.FC = () => {
                   </motion.div>
                 )}
 
-                {/* Example Query Prompts */}
+                {/* Example Query Prompts (shell) */}
                 <div className="pl-11 space-y-2">
                   <span className="text-[11px] uppercase tracking-wider font-semibold text-brand-text/50 block">
                     Common Topics
@@ -460,7 +460,7 @@ export const EnquirySection: React.FC = () => {
                     {['CIDB & NHBRC scope', 'Property management rates', 'Falcon Haven office'].map((topic) => (
                       <span
                         key={topic}
-                        className="text-[11px] bg-brand-white px-3 py-1.5 rounded-full border border-brand-purple/10 text-brand-text/75 hover:border-brand-gold/50 transition-colors"
+                        className="text-[11px] bg-brand-white px-3 py-1.5 rounded-full border border-brand-purple/10 text-brand-text/75"
                       >
                         {topic}
                       </span>
@@ -478,7 +478,7 @@ export const EnquirySection: React.FC = () => {
               </div>
             </div>
 
-            {/* Chat Input Shell */}
+            {/* Chat Input Shell (Disabled appearance as specified) */}
             <div className="p-4 bg-brand-white border-t border-brand-purple/10 relative z-10">
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">

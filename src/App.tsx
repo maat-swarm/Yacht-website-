@@ -21,10 +21,10 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-offwhite text-brand-text font-sans selection:bg-brand-purple/20 selection:text-brand-purple relative">
-      {/* Living Atmospheric Background */}
+      {/* Living Atmospheric Background (fixed behind all content) */}
       <LivingBackground />
 
-      {/* Opening Ceremonial Sequence */}
+      {/* Opening Ceremonial Sequence (once per session, skippable) */}
       {!introFinished && (
         <OpeningSequence onComplete={() => setIntroFinished(true)} />
       )}
@@ -32,7 +32,7 @@ export default function App() {
       {/* Desktop Custom Cursor */}
       <CustomCursor />
 
-      {/* Main Page Layout */}
+      {/* Main Single-Page Layout */}
       <Header />
       <main className="flex-1">
         <Hero />
