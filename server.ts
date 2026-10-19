@@ -80,7 +80,33 @@ async function startServer() {
   });
 
   // Visitor chat
-  app.post('/api/chat', async (req: Request, res: Response) => {
+  app.post('/api/research', async (req, res) => {
+  try {
+    const { query, focus } = req.body || {};
+    const key = process.env.PERPLEXITY_API_KEY;
+    if (!key || key.startsWith('paste_')) return res.status(503).json({ error: 'PERPLEXITY_API_KEY not set' });
+    const scope = focus === 'tenders'
+      ? ' Focus on South African construction and property tenders (etenders.gov.za, CIDB, provincial portals). For each: title, issuer, closing date, link.'
+      : focus === 'leads'
+      ? ' Focus on South African property and construction prospects. For each: name, type, why they fit, public contact page.'
+      : ' Focus on South African construction and property market news relevant to a Grade 1 GB contractor.';
+    const r = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
+      body: JSON.stringify({ model: 'sonar', messages: [
+        { role: 'system', content: 'You are a business intelligence researcher for Yacht Properties, South Africa. Be factual, concise, and cite sources.' },
+        { role: 'user', content: (query || 'South Africa construction property tenders this week') + scope }
+      ] })
+    });
+    const j: any = await r.json();
+    if (!r.ok) return res.status(r.status).json({ error: j });
+    res.json({ answer: j.choices?.[0]?.message?.content || '', citations: j.citations || [] });
+  } catch (e) {
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+app.post('/api/chat', async (req: Request, res: Response) => {
     try {
       const { messages, context } = req.body;
       if (!Array.isArray(messages) || messages.length === 0) {
