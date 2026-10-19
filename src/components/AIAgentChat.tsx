@@ -190,12 +190,7 @@ export const AIAgentChat: React.FC<AIAgentChatProps> = ({ isOpen, onClose }) => 
               >
                 Concierge
               </button>
-              <button
-                onClick={() => setTab('pa')}
-                className={`flex-1 py-2 text-[11px] font-semibold uppercase tracking-wider transition-colors ${tab === 'pa' ? 'text-brand-gold border-b-2 border-brand-gold' : 'text-brand-white/50 hover:text-brand-white/80'}`}
-              >
-                SA Business Finder
-              </button>
+              
             </div>
 
             {/* Chat Tab */}
@@ -260,7 +255,7 @@ export const AIAgentChat: React.FC<AIAgentChatProps> = ({ isOpen, onClose }) => 
             )}
 
             {/* PA Tab */}
-            {tab === 'pa' && (
+            {false && tab === 'pa' && (
               <div className="flex-1 overflow-y-auto flex flex-col">
                 {!paUnlocked ? (
                   <div className="flex-1 flex flex-col items-center justify-center px-6 gap-4">
