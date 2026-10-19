@@ -1,3 +1,4 @@
+import { PaPortal } from './components/PaPortal';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -44,6 +45,7 @@ export default function App() {
         <Contact />
       </main>
       <Footer />
+      <PaPortal />
       <FloatingAgentLauncher />
     </div>
   );

@@ -85,6 +85,54 @@ async function startServer() {
   res.json({ ok: (req.body?.pass || '') === expected });
 });
 
+const paStats = { visits: 0, chats: 0, triage: 0, since: new Date().toISOString() };
+app.use((req, _res, next) => {
+  if (req.method === 'POST' && req.path === '/api/chat') paStats.chats++;
+  if (req.method === 'POST' && req.path === '/api/agent/triage') paStats.triage++;
+  next();
+});
+app.post('/api/track', (_req, res) => { paStats.visits++; res.json({ ok: true }); });
+app.post('/api/pa/chat', async (req, res) => {
+  try {
+    const { pin, messages } = req.body || {};
+    if ((pin || '') !== (process.env.PA_PIN || '4821')) return res.status(401).json({ error: 'bad pin' });
+    const msgs = Array.isArray(messages) ? messages.slice(-12) : [];
+    if (!msgs.length) return res.json({ ok: true });
+    const gkey = process.env.GROQ_API_KEY;
+    if (!gkey) return res.status(503).json({ error: 'GROQ_API_KEY not set' });
+    const fs = await import('fs');
+    const path = await import('path');
+    let kb = '';
+    try { kb = fs.readFileSync(path.join(process.cwd(), 'pa', 'sam.md'), 'utf8'); } catch {}
+    const last = String(msgs[msgs.length - 1].content || '');
+    let research = '';
+    if (/\b(yes|yep|yeah|sure|brief|tender|research|lead|prospect|go ahead)\b/i.test(last) && process.env.PERPLEXITY_API_KEY) {
+      const q = last.length > 25 ? last : 'South Africa construction and property tenders open this week';
+      const pr = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + process.env.PERPLEXITY_API_KEY },
+        body: JSON.stringify({ model: 'sonar', messages: [
+          { role: 'system', content: 'Business intelligence researcher for a South African Grade 1 GB construction and property company. Factual, concise, cite sources, include closing dates and links.' },
+          { role: 'user', content: q }
+        ] })
+      });
+      const pj: any = await pr.json();
+      research = (pj.choices?.[0]?.message?.content || '') + '\nSOURCES: ' + (pj.citations || []).join(' | ');
+    }
+    const system = 'You are the private business PA for Sam, owner of Yacht Properties. Business only. Use ONLY the knowledge file, live stats and research below. Never invent facts, numbers, tenders or names. If a stat is zero or missing, say so plainly. Stats reset on redeploy and do not include leads stored elsewhere. When giving a brief: website stats first, then tenders with closing dates and links, then one suggested next action. Be concise and plain.\n\nKNOWLEDGE:\n' + kb + '\n\nLIVE STATS (since ' + paStats.since + '): website visits ' + paStats.visits + ', visitor chats ' + paStats.chats + ', project intake submissions ' + paStats.triage + '.\n\nRESEARCH:\n' + (research || 'none fetched this turn');
+    const gr = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + gkey },
+      body: JSON.stringify({ model: 'llama-3.3-70b-versatile', temperature: 0.3, messages: [{ role: 'system', content: system }, ...msgs] })
+    });
+    const gj: any = await gr.json();
+    if (!gr.ok) return res.status(gr.status).json({ error: gj });
+    res.json({ reply: gj.choices?.[0]?.message?.content || '' });
+  } catch (e) {
+    res.status(500).json({ error: String(e) });
+  }
+});
+
 app.post('/api/research', async (req, res) => {
   try {
     const { query, focus } = req.body || {};
