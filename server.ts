@@ -448,4 +448,5 @@ Use real, plausible South African organisations. Never invent contact details or
   });
 }
 
-startServer();
+if (!process.env.VERCEL) { startServer(); }
+export default app;
