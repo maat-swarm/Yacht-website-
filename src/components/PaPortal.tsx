@@ -35,7 +35,9 @@ export function PaPortal() {
     setMsgs(next); setInput(''); setBusy(true);
     try {
       const r = await fetch('/api/pa/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin, messages: next }) });
-      const j = await r.json();
+      const raw = await r.text();
+      let j: any = {};
+      try { j = JSON.parse(raw); } catch { j = { error: 'HTTP ' + r.status + ' ' + raw.slice(0, 150) }; }
       setMsgs([...next, { role: 'assistant', content: j.reply || ('Error: ' + JSON.stringify(j.error || j).slice(0, 200)) }]);
     } catch { setMsgs([...next, { role: 'assistant', content: 'Connection error.' }]); }
     setBusy(false);
