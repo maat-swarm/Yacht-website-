@@ -3,56 +3,64 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
-import { GoogleGenAI } from '@google/genai';
+import Groq from 'groq-sdk';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Initialize Gemini SDK with telemetry header
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    },
-  },
-});
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-const YACHT_PROPERTIES_SYSTEM_INSTRUCTION = `
-You are the official AI Technical Agent & Operations Officer for "Yacht Properties (Pty) Ltd", a distinguished South African property development and construction company.
-Company Details:
-- Legal Name: Yacht Properties (Pty) Ltd
-- Head Office: Falcon Haven, Terenure, 1619 (Kempton Park, Gauteng, South Africa)
-- Executive Desk: Sam Maripane (Phone: 063 759 0216, Email: sam@yachtmaripane.co.za)
-- Company Slogan: "We are You"
-- Stewardship Mandate: "Stewardship for God's provision to the people less blessed than me."
-- Core Disciplines:
-  1. Construction: Turnkey civil works, structural building, commercial fit-outs, residential housing, general contracting.
-  2. Property Management: Facilities maintenance, lease administration, rent collections, asset preservation.
-  3. Real Estate Services: Acquisitions, sales advisory, commercial & residential leasing, portfolio placements.
-  4. Extended Capabilities: Property Investment, Commercial & Retail, Student Housing, Industrial & Mixed-Use, Project Management, Tendering & Public Sector Contracting, SMME Partnerships.
-- Statutory Registrations:
-  - CIDB (Construction Industry Development Board): General Building (GB), Civil Engineering (CE).
-  - NHBRC (National Home Builders Registration Council): Structural home warranties & technical standards.
-  - PPRA (Property Practitioners Regulatory Authority): Real estate & property management compliance.
+const MODEL = 'llama-3.3-70b-versatile';
 
-Tone & Persona:
-- Trustworthy, dignified, rooted, respectful, and authoritative yet warm.
-- Plain words, clear sentences. No marketing buzzwords like "seamless", "robust", "leverage", "delve".
-- Always grounded in South African property regulations, SANS building standards, and local context.
-- When answering project questions, provide practical timelines, regulatory steps (CIDB, NHBRC, municipal submissions), and encourage formal enquiry submission or calling Sam at 063 759 0216.
-- If the user asks for an estimate or compliance check, offer clear, structured information.
-`;
+const YACHT_SYSTEM_PROMPT = `You are Yacht Concierge, the official AI assistant for Yacht Properties (Pty) Ltd — a South African property and construction company.
 
-// Helper: Guarantee snappy response times with 6s timeout
-async function withTimeout<T>(promise: Promise<T>, timeoutMs = 6000): Promise<T> {
-  let timer: NodeJS.Timeout;
+Answer ONLY from the information below. If a question falls outside this information, say: "I don't have that detail — please contact Sam directly at sam@yachtmaripane.co.za or 063 759 0216."
+
+Never invent facts, prices, project names, or people.
+
+COMPANY
+Name: Yacht Properties (Pty) Ltd
+Established: 2019
+Registration: 2019/463037/07
+Address: Falcon Haven, Terenure, 1619
+Phone: 063 759 0216
+Email: sam@yachtmaripane.co.za
+Slogan: We Are You
+
+SERVICES
+1. Property Investment — acquire, own and develop assets
+2. Commercial and Retail — shops and shopping complexes
+3. Residential and Student Housing — housing development and management
+4. Construction and General Building — building, alterations, renovations
+5. Industrial and Mixed-Use — industrial and combined-use developments
+6. Rental and Leasing — tenant placement, leases and collections
+7. Property and Facilities Management — maintenance and operations
+8. Project Management — budgets, procurement and quality control
+9. Tendering and Contracting — public- and private-sector opportunities
+10. Partnerships and SMME Participation — supplier, contractor, enterprise
+
+CREDENTIALS
+CIDB: 10316208 (Grade 1 GB)
+NHBRC: 4000003602
+PPRA: 20237146431
+Insurance: Santam
+
+PURPOSE
+Stewardship for God's provision to the people less blessed than me.
+
+QUOTE REQUESTS
+If a visitor wants a quote, collect in order: their name, contact number or email, and what they need. Then say you have noted their details and Sam will be in touch within one business day.
+
+Tone: warm, professional, grounded. Plain sentences. No buzzwords.`;
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs = 10000): Promise<T> {
   const timeoutPromise = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error('AI generation timeout')), timeoutMs);
+    const timer = setTimeout(() => reject(new Error('AI generation timeout')), timeoutMs);
+    return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timer));
   });
-  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timer));
+  return Promise.race([promise, timeoutPromise]);
 }
 
 async function startServer() {
@@ -61,70 +69,62 @@ async function startServer() {
 
   app.use(express.json());
 
-  // Health check endpoint
-  app.get('/api/health', (_req: Request, res: Response) => {
+  // Health check
+  app.post('/api/health', (_req: Request, res: Response) => {
     res.json({
       status: 'online',
       company: 'Yacht Properties (Pty) Ltd',
-      model: 'gemini-3.8-flash',
-      geminiConfigured: !!process.env.GEMINI_API_KEY,
+      model: MODEL,
+      groqConfigured: !!process.env.GROQ_API_KEY,
     });
   });
 
-  // Main AI Agent Chat endpoint
+  // Visitor chat
   app.post('/api/chat', async (req: Request, res: Response) => {
     try {
       const { messages, context } = req.body;
-
       if (!Array.isArray(messages) || messages.length === 0) {
         return res.status(400).json({ error: 'Messages array is required' });
       }
 
-      // Build conversation history for Gemini
-      const conversationHistory = messages.map((m: { role: string; content: string }) => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: m.content }],
+      const history = messages.map((m: { role: string; content: string }) => ({
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: m.content,
       }));
 
-      // Call Gemini 3.8 Flash with 8s safety timeout
-      const response = await withTimeout(
-        ai.models.generateContent({
-          model: 'gemini-3.8-flash',
-          contents: conversationHistory,
-          config: {
-            systemInstruction:
-              YACHT_PROPERTIES_SYSTEM_INSTRUCTION +
-              (context ? `\nActive Context: ${JSON.stringify(context)}` : ''),
-            temperature: 0.7,
-          },
+      const completion = await withTimeout(
+        groq.chat.completions.create({
+          model: MODEL,
+          messages: [
+            {
+              role: 'system',
+              content: YACHT_SYSTEM_PROMPT + (context ? `\n\nActive context: ${JSON.stringify(context)}` : ''),
+            },
+            ...history,
+          ],
+          temperature: 0.5,
+          max_tokens: 512,
         }),
-        8000
+        10000
       );
 
-      const reply = response.text || 'Thank you for reaching Yacht Properties. How may our operations desk assist your property or construction brief today?';
-
-      return res.json({
-        reply,
-        timestamp: new Date().toISOString(),
-      });
+      const reply = completion.choices[0]?.message?.content || 'Thank you for reaching out to Yacht Properties. How may I assist you?';
+      return res.json({ reply, timestamp: new Date().toISOString() });
     } catch (err: any) {
       console.error('Error in /api/chat:', err);
-      // Return structured fallback if API error occurs
       return res.status(200).json({
-        reply:
-          'Welcome to Yacht Properties (Pty) Ltd. Our operational desk specializes in civil construction, property management, and statutory compliance (CIDB, NHBRC, PPRA). Please submit your project brief through the enquiry form or call our direct line at 063 759 0216.',
+        reply: 'Welcome to Yacht Properties (Pty) Ltd. We specialise in property investment, construction, and facilities management across South Africa. Please submit your enquiry through the form or call us directly at 063 759 0216.',
         fallback: true,
       });
     }
   });
 
-  // Automated Project Triage & Dispatch Engine
+  // Project triage
   app.post('/api/agent/triage', async (req: Request, res: Response) => {
     try {
       const { fullName, contact, service, message } = req.body;
 
-      const prompt = `
-Analyze the following construction / property project brief submitted to Yacht Properties (Pty) Ltd:
+      const prompt = `Analyze the following construction / property project brief submitted to Yacht Properties (Pty) Ltd:
 Client Name: ${fullName}
 Contact: ${contact}
 Requested Service: ${service}
@@ -133,51 +133,45 @@ Project Description: ${message}
 Output a strictly valid JSON response with the following schema:
 {
   "projectTier": "Tier 1: Minor Works" | "Tier 2: Commercial/Medium" | "Tier 3: Major Infrastructure",
-  "estimatedDurationWeeks": number (e.g. 12),
+  "estimatedDurationWeeks": number,
   "statutoryRequirements": {
     "cidbRequired": boolean,
-    "cidbClass": string (e.g. "3GB to 5GB" or "Not required"),
+    "cidbClass": string,
     "nhbrcRequired": boolean,
-    "ppraRequired": boolean,
-    "municipalApproval": string (e.g. "City of Ekurhuleni / Local Council submission required")
+    "ppaRequired": boolean,
+    "municipalApproval": string
   },
-  "milestones": [
-    { "phase": string, "duration": string, "description": string }
-  ],
+  "milestones": [{ "phase": string, "duration": string, "description": string }],
   "riskRating": "Low" | "Medium" | "Elevated",
-  "triageSummary": string (1-2 sentences plain language summary),
+  "triageSummary": string,
   "priority": "Standard" | "High" | "Immediate Review",
   "dispatchedTo": "Sam Maripane (Executive Desk)"
-}
-`;
+}`;
 
-      const response = await withTimeout(
-        ai.models.generateContent({
-          model: 'gemini-3.8-flash',
-          contents: prompt,
-          config: {
-            systemInstruction: 'You are an expert construction estimator and statutory compliance auditor for South Africa. Return only valid JSON.',
-            responseMimeType: 'application/json',
-            temperature: 0.3,
-          },
+      const completion = await withTimeout(
+        groq.chat.completions.create({
+          model: MODEL,
+          messages: [
+            { role: 'system', content: 'You are a professional South African quantity surveyor and project director. Return only valid JSON.' },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.3,
+          max_tokens: 1000,
+          response_format: { type: 'json_object' },
         }),
-        6000
+        10000
       );
 
-      let triageData;
+      let triageData = null;
       try {
-        const rawText = response.text || '{}';
-        const cleaned = rawText
-          .replace(/```json/gi, '')
-          .replace(/```/g, '')
-          .trim();
-        triageData = JSON.parse(cleaned);
+        const rawText = completion.choices[0]?.message?.content || '{}';
+        triageData = JSON.parse(rawText);
       } catch (parseError) {
-        console.warn('Failed to parse Gemini triage JSON, using structured fallback:', parseError);
+        console.warn('Failed to parse triage JSON:', parseError);
         triageData = null;
       }
 
-      if (!triageData || !triageData.projectTier) {
+      if (!triageData?.projectTier) {
         triageData = {
           projectTier: 'Tier 2: Commercial/Medium',
           estimatedDurationWeeks: 16,
@@ -185,7 +179,7 @@ Output a strictly valid JSON response with the following schema:
             cidbRequired: true,
             cidbClass: '4GB / 3CE General Building',
             nhbrcRequired: (req.body.service || '').includes('Residential'),
-            ppraRequired: (req.body.service || '').includes('Real Estate'),
+            ppaRequired: (req.body.service || '').includes('Real Estate'),
             municipalApproval: 'Local authority building plan approval required prior to site establishment',
           },
           milestones: [
@@ -195,32 +189,21 @@ Output a strictly valid JSON response with the following schema:
             { phase: 'Snagging & Handover', duration: 'Weeks 13-16', description: 'Occupancy certificate and formal handover.' },
           ],
           riskRating: 'Medium',
-          triageSummary: `Project intake completed for ${req.body.service || 'Construction'}. Scope staged for Falcon Haven executive desk review.`,
+          triageSummary: `Project staged for ${req.body.service || 'Construction'} under direct oversight of Falcon Haven executive desk.`,
           priority: 'High',
           dispatchedTo: 'Sam Maripane (Executive Desk)',
         };
       }
 
-      return res.json({
-        success: true,
-        triageData,
-        submittedAt: new Date().toISOString(),
-      });
+      return res.json({ success: true, triageData, submittedAt: new Date().toISOString() });
     } catch (err: any) {
       console.error('Error in /api/agent/triage:', err);
-      // Fallback rule-based triage
-      return res.json({
+      return res.status(200).json({
         success: true,
         triageData: {
           projectTier: 'Tier 2: Commercial/Medium',
           estimatedDurationWeeks: 16,
-          statutoryRequirements: {
-            cidbRequired: true,
-            cidbClass: '4GB / 3CE General Building',
-            nhbrcRequired: req.body.service?.includes('Residential') ?? false,
-            ppraRequired: req.body.service?.includes('Real Estate') ?? false,
-            municipalApproval: 'Local authority building plan approval required prior to site establishment',
-          },
+          statutoryRequirements: { cidbRequired: true, cidbClass: '4GB / 3CE General Building', nhbrcRequired: false, ppaRequired: false, municipalApproval: 'Local authority building plan approval required prior to site establishment' },
           milestones: [
             { phase: 'Site Scoping & BOQ', duration: 'Weeks 1-2', description: 'Site inspection and preliminary bill of quantities.' },
             { phase: 'Regulatory & Approvals', duration: 'Weeks 3-4', description: 'Statutory filings and safety officer appointment.' },
@@ -228,7 +211,7 @@ Output a strictly valid JSON response with the following schema:
             { phase: 'Snagging & Handover', duration: 'Weeks 13-16', description: 'Occupancy certificate and formal handover.' },
           ],
           riskRating: 'Medium',
-          triageSummary: `Project staged for ${req.body.service} under direct oversight of Falcon Haven executive desk.`,
+          triageSummary: `Project staged for ${req.body.service || 'Construction'} under direct oversight of Falcon Haven executive desk.`,
           priority: 'High',
           dispatchedTo: 'Sam Maripane (Executive Desk)',
         },
@@ -237,13 +220,12 @@ Output a strictly valid JSON response with the following schema:
     }
   });
 
-  // Automated Quick Estimator Engine
+  // Estimate engine
   app.post('/api/agent/estimate', async (req: Request, res: Response) => {
     try {
       const { serviceType, areaSqm, projectScope } = req.body;
 
-      const prompt = `
-Generate a high-level construction / property management project estimate roadmap in South Africa:
+      const prompt = `Generate a high-level construction / property management project estimate roadmap in South Africa:
 Service Type: ${serviceType}
 Approximate Area (Sqm): ${areaSqm || 'Standard node'}
 Scope Details: ${projectScope || 'Turnkey specification'}
@@ -254,36 +236,31 @@ Return strictly JSON:
   "keyTrades": string[],
   "statutoryGates": string[],
   "preliminaryNotes": string
-}
-`;
+}`;
 
-      const response = await withTimeout(
-        ai.models.generateContent({
-          model: 'gemini-3.8-flash',
-          contents: prompt,
-          config: {
-            systemInstruction: 'You are a professional South African quantity surveyor and project director. Return only valid JSON.',
-            responseMimeType: 'application/json',
-            temperature: 0.3,
-          },
+      const completion = await withTimeout(
+        groq.chat.completions.create({
+          model: MODEL,
+          messages: [
+            { role: 'system', content: 'You are a professional South African quantity surveyor and project director. Return only valid JSON.' },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.3,
+          max_tokens: 600,
+          response_format: { type: 'json_object' },
         }),
-        6000
+        10000
       );
 
-      let estimate;
+      let estimate = null;
       try {
-        const rawText = response.text || '{}';
-        const cleaned = rawText
-          .replace(/```json/gi, '')
-          .replace(/```/g, '')
-          .trim();
-        estimate = JSON.parse(cleaned);
+        const rawText = completion.choices[0]?.message?.content || '{}';
+        estimate = JSON.parse(rawText);
       } catch (parseError) {
-        console.warn('Failed to parse Gemini estimate JSON, using structured fallback:', parseError);
         estimate = null;
       }
 
-      if (!estimate || !estimate.estimatedWeeks) {
+      if (!estimate?.estimatedWeeks) {
         estimate = {
           estimatedWeeks: 14,
           keyTrades: ['Earthworks & Foundation Civils', 'Structural Masonry & Wet Works', 'Roofing & Waterproofing', 'MEP & Finishes'],
@@ -307,7 +284,73 @@ Return strictly JSON:
     }
   });
 
-  // Vite dev server mounting in dev or static serving in production
+  // Sam's prospect finder — PA tool
+  app.post('/api/prospects', async (req: Request, res: Response) => {
+    try {
+      const { target } = req.body;
+      if (!target || typeof target !== 'string') {
+        return res.status(400).json({ error: 'Target description is required' });
+      }
+
+      const prompt = `You are a business development assistant for Yacht Properties (Pty) Ltd, a South African property and construction company (CIDB Grade 1 GB, NHBRC registered, PPRA registered).
+
+Sam Maripane (Director) wants to find prospects for this opportunity:
+"${target}"
+
+Return exactly 5 realistic South African prospect companies or organisations that could be genuine partners, clients, or tender opportunities for this goal. For each, draft a short, professional intro message Sam could send.
+
+Return strictly valid JSON:
+{
+  "prospects": [
+    {
+      "name": "Company or Organisation Name",
+      "type": "Developer | Municipality | SMME | SOE | Retailer | Other",
+      "why": "One sentence on why they are a fit",
+      "searchQuery": "Google search query to find their contact page",
+      "draftMessage": "Dear [Name], My name is Sam Maripane, Director of Yacht Properties (Pty) Ltd..."
+    }
+  ]
+}
+
+Use real, plausible South African organisations. Never invent contact details or phone numbers.`;
+
+      const completion = await withTimeout(
+        groq.chat.completions.create({
+          model: MODEL,
+          messages: [
+            { role: 'system', content: 'You are a South African business development expert. Return only valid JSON.' },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.6,
+          max_tokens: 1500,
+          response_format: { type: 'json_object' },
+        }),
+        15000
+      );
+
+      let result = null;
+      try {
+        const rawText = completion.choices[0]?.message?.content || '{}';
+        result = JSON.parse(rawText);
+      } catch (parseError) {
+        result = null;
+      }
+
+      if (!result?.prospects) {
+        return res.status(200).json({
+          success: false,
+          message: 'Could not generate prospects. Please try a more specific target description.',
+        });
+      }
+
+      return res.json({ success: true, prospects: result.prospects, generatedAt: new Date().toISOString() });
+    } catch (err: any) {
+      console.error('Error in /api/prospects:', err);
+      return res.status(500).json({ error: 'Prospect finder temporarily unavailable.' });
+    }
+  });
+
+  // Vite dev server mounting
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -322,7 +365,7 @@ Return strictly JSON:
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[Yacht Properties Server] Listening on http://0.0.0.0:${PORT}`);
+    console.log(`Yacht Properties Server listening on http://0.0.0.0:${PORT}`);
   });
 }
 

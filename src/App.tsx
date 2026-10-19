@@ -15,6 +15,7 @@ import { Credentials } from './components/Credentials';
 import { EnquirySection } from './components/EnquirySection';
 import { Contact } from './components/Contact';
 import { Footer } from './components/Footer';
+import { FloatingAgentLauncher } from './components/FloatingAgentLauncher';
 
 export default function App() {
   const [introFinished, setIntroFinished] = useState(false);
@@ -43,6 +44,7 @@ export default function App() {
         <Contact />
       </main>
       <Footer />
+      <FloatingAgentLauncher />
     </div>
   );
 }
