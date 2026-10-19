@@ -67,7 +67,7 @@ export function PaPortal() {
 
   return (
     <>
-      <button aria-label="CoreIQ" onClick={() => setAsking(true)} style={{ position: 'fixed', left: 12, bottom: 12, width: 44, height: 44, borderRadius: 22, padding: 0, overflow: 'hidden', zIndex: 9990, border: '1px solid rgba(201,162,74,0.5)', background: '#0b0f14', opacity: 0.9, boxShadow: '0 0 12px rgba(80,120,255,0.35)' }}><img src="/pa-logo.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></button>
+      <button aria-label="CoreIQ" onClick={() => setAsking(true)} style={{ position: 'fixed', right: 12, bottom: 96, width: 44, height: 44, borderRadius: 22, padding: 0, overflow: 'hidden', zIndex: 9990, border: '1px solid rgba(201,162,74,0.5)', background: '#0b0f14', opacity: 0.9, boxShadow: '0 0 12px rgba(80,120,255,0.35)' }}><img src="/pa-logo.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></button>
       {asking && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setAsking(false)}>
           <div onClick={e => e.stopPropagation()} style={{ background: '#111827', padding: 20, borderRadius: 16, width: 260 }}>
