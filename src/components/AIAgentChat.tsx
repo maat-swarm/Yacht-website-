@@ -21,7 +21,7 @@ interface AIAgentChatProps {
   onClose: () => void;
 }
 
-const PA_PASSPHRASE = 'yacht2024';
+
 
 const GREETING: Message = {
   role: 'assistant',
@@ -35,6 +35,25 @@ export const AIAgentChat: React.FC<AIAgentChatProps> = ({ isOpen, onClose }) => 
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<'chat' | 'pa'>('chat');
   const [paUnlocked, setPaUnlocked] = useState(false);
+  const [paErr, setPaErr] = useState(false);
+  const [tender, setTender] = useState<{answer: string; citations: string[]} | null>(null);
+  const [tenderLoading, setTenderLoading] = useState(false);
+  const unlockPA = async () => {
+    try {
+      const r = await fetch('/api/pa-auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pass: paPassInput }) });
+      const j = await r.json();
+      if (j.ok) { setPaErr(false); setPaUnlocked(true); } else { setPaErr(true); }
+    } catch { setPaErr(true); }
+  };
+  useEffect(() => {
+    if (!paUnlocked) return;
+    setTenderLoading(true);
+    fetch('/api/research', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: 'South Africa construction property tenders this week', focus: 'tenders' }) })
+      .then(r => r.json())
+      .then(j => setTender({ answer: j.answer || (j.error ? 'Research unavailable: ' + JSON.stringify(j.error).slice(0, 200) : ''), citations: j.citations || [] }))
+      .catch(() => setTender({ answer: 'Research unavailable.', citations: [] }))
+      .finally(() => setTenderLoading(false));
+  }, [paUnlocked]);
   const [paInput, setPaInput] = useState('');
   const [paPassInput, setPaPassInput] = useState('');
   const [paLoading, setPaLoading] = useState(false);
@@ -256,17 +275,17 @@ export const AIAgentChat: React.FC<AIAgentChatProps> = ({ isOpen, onClose }) => 
                       type="password"
                       value={paPassInput}
                       onChange={e => setPaPassInput(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && paPassInput === PA_PASSPHRASE && setPaUnlocked(true)}
+                      onKeyDown={e => e.key === 'Enter' && unlockPA()}
                       placeholder="Enter access code"
                       className="w-full bg-brand-white/8 border border-brand-purple/20 rounded-lg px-3 py-2 text-xs text-brand-white placeholder-brand-white/30 focus:outline-none focus:border-brand-gold/50 transition-colors text-center"
                     />
                     <button
-                      onClick={() => paPassInput === PA_PASSPHRASE && setPaUnlocked(true)}
+                      onClick={() => unlockPA()}
                       className="w-full py-2 rounded-lg bg-brand-gold/20 border border-brand-gold/30 text-brand-gold text-xs font-semibold hover:bg-brand-gold/30 transition-colors"
                     >
                       Access Finder
                     </button>
-                    {paPassInput && paPassInput !== PA_PASSPHRASE && (
+                    {paErr && (
                       <p className="text-[10px] text-brand-scarlet">Incorrect access code</p>
                     )}
                   </div>
@@ -305,7 +324,20 @@ export const AIAgentChat: React.FC<AIAgentChatProps> = ({ isOpen, onClose }) => 
                           <p className="text-[11px] text-brand-white/50">Finding prospects…</p>
                         </div>
                       )}
-                      {!paLoading && prospects.length === 0 && paInput && (
+                      {tenderLoading && <p className="text-[11px] text-brand-white/50">Scanning live tenders and market signals…</p>}
+                {tender && (
+                  <div className="mb-3 p-3 rounded-xl border border-white/10 text-[11px] text-brand-white/80 whitespace-pre-wrap">
+                    {tender.answer}
+                    {tender.citations.length > 0 && (
+                      <div className="mt-2 flex flex-col gap-1">
+                        {tender.citations.slice(0, 6).map((c, i) => (
+                          <a key={i} href={c} target="_blank" rel="noreferrer" className="underline break-all">{c}</a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {!paLoading && prospects.length === 0 && paInput && (
                         <p className="text-[11px] text-brand-white/40 text-center py-8">No results yet. Run a search above.</p>
                       )}
                       {prospects.map((p, idx) => (
