@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { siteContent } from '../data/content';
 import { GoldRule } from './GoldRule';
 import { useMotionIntensity } from '../motion/hooks';
 import { MOTION_EASINGS } from '../motion/tokens';
-import { Send, CheckCircle, MessageSquare, Bot, AlertCircle, Check } from 'lucide-react';
+import { Send, CheckCircle, AlertCircle, Check } from 'lucide-react';
+import { AiAgentChat } from './AiAgentChat';
+import { AutomatedTriageModal, TriageResult } from './AutomatedTriageModal';
+import { supabase } from '../lib/supabaseClient';
 
 export interface EnquiryFormData {
   fullName: string;
@@ -27,20 +30,11 @@ export const EnquirySection: React.FC = () => {
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [validationError, setValidationError] = useState(false);
 
-  // Chat typing indicator (1.5 seconds before welcome message appears)
-  const [isTyping, setIsTyping] = useState(true);
+  // Triage Modal state
+  const [triageModalOpen, setTriageModalOpen] = useState(false);
+  const [triageResult, setTriageResult] = useState<TriageResult | null>(null);
+  const [ticketId, setTicketId] = useState<string>('');
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsTyping(false);
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  /**
-   * Clearly named function where a backend endpoint can be wired in later.
-   * Logs to console and simulates brief submission as specified.
-   */
   const submitEnquiry = async (data: EnquiryFormData) => {
     if (!data.fullName.trim() || !data.contact.trim() || !data.message.trim()) {
       setValidationError(true);
@@ -48,11 +42,60 @@ export const EnquirySection: React.FC = () => {
       return;
     }
 
-    console.log('[Yacht Properties] New Enquiry Received:', data);
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    setIsSubmitting(false);
-    setSubmitted(true);
+    const newTicketId = `YP-${Math.floor(100000 + Math.random() * 900000)}`;
+    setTicketId(newTicketId);
+
+    // Save lead to Supabase if configured
+    if (supabase) {
+      try {
+        await supabase.from('leads').insert({
+          name: data.fullName,
+          contact: data.contact,
+          need: `${data.service}: ${data.message}`,
+          source: 'Website Enquiry Form',
+          status: 'new',
+        });
+      } catch (err) {
+        console.warn('Notice saving lead to Supabase:', err);
+      }
+    }
+
+    // Call backend triage engine
+    try {
+      const res = await fetch('/api/agent/triage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.triageData) {
+          setTriageResult(json.triageData);
+          setTriageModalOpen(true);
+        }
+      }
+    } catch (err) {
+      console.warn('Triage endpoint error:', err);
+    } finally {
+      setIsSubmitting(false);
+      setSubmitted(true);
+    }
+  };
+
+  const handleAutoFillEnquiry = (details: { fullName?: string; contact?: string; service?: string; message: string }) => {
+    setFormData((prev) => ({
+      ...prev,
+      fullName: details.fullName || prev.fullName,
+      contact: details.contact || prev.contact,
+      service: details.service || prev.service,
+      message: details.message || prev.message,
+    }));
+    const formElement = document.getElementById('enquiry-form');
+    if (formElement) {
+      formElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -344,171 +387,25 @@ export const EnquirySection: React.FC = () => {
             )}
           </motion.div>
 
-          {/* Right Column: Visual Shell Chat Panel "Ask Yacht Properties" */}
-          <motion.div
-            className="lg:col-span-5 bg-brand-white rounded-2xl shadow-sm overflow-hidden flex flex-col h-full min-h-[520px] relative border border-brand-purple/15"
-            initial={intensity !== 'off' ? { opacity: 0, x: 25 } : false}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ duration: 0.65, ease: MOTION_EASINGS.default }}
-          >
-            {/* Very slow gold light travelling around panel border */}
-            {intensity === 'full' && (
-              <motion.div
-                className="absolute inset-0 rounded-2xl pointer-events-none z-30"
-                style={{
-                  padding: '2px',
-                  background:
-                    'conic-gradient(from 0deg, transparent 0deg, rgba(201, 162, 74, 0.7) 30deg, transparent 60deg)',
-                  mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                  maskComposite: 'exclude',
-                }}
-                animate={{ rotate: 360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-              />
-            )}
-
-            {/* Chat Panel Header */}
-            <div className="bg-brand-navy p-4 sm:p-5 text-brand-white flex items-center justify-between relative z-10">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-brand-white p-1 flex items-center justify-center shadow-xs">
-                  <img
-                    src="/logo-wordmark.png"
-                    alt="Yacht Properties"
-                    className="h-5 w-auto object-contain"
-                  />
-                </div>
-                <div>
-                  <h4 className="font-serif font-bold text-base text-brand-white leading-tight">
-                    Ask Yacht Properties
-                  </h4>
-                  <span className="text-[11px] text-brand-gold tracking-wider uppercase font-semibold">
-                    Interactive Shell
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 bg-brand-white/10 px-2.5 py-1 rounded text-[11px] text-brand-white/80">
-                <span className="w-2 h-2 rounded-full bg-brand-gold" />
-                <span>Standby</span>
-              </div>
-            </div>
-
-            {/* Chat Panel Body with 1.5s typing indicator before welcome message */}
-            <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between bg-brand-offwhite/50 space-y-4 relative z-10">
-              <div className="space-y-4">
-                {/* Typing indicator for 1.5 seconds */}
-                <AnimatePresence>
-                  {isTyping && (
-                    <motion.div
-                      className="flex items-center gap-2 bg-brand-white p-3 rounded-xl border border-brand-purple/10 w-fit"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <Bot className="w-4 h-4 text-brand-purple" />
-                      <span className="text-xs text-brand-text/60 mr-1">Assistant typing</span>
-                      <div className="flex items-center gap-1">
-                        <motion.span
-                          className="w-1.5 h-1.5 rounded-full bg-brand-purple"
-                          animate={{ y: [0, -4, 0] }}
-                          transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
-                        />
-                        <motion.span
-                          className="w-1.5 h-1.5 rounded-full bg-brand-purple"
-                          animate={{ y: [0, -4, 0] }}
-                          transition={{ duration: 0.6, repeat: Infinity, delay: 0.15 }}
-                        />
-                        <motion.span
-                          className="w-1.5 h-1.5 rounded-full bg-brand-purple"
-                          animate={{ y: [0, -4, 0] }}
-                          transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }}
-                        />
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Assistant Welcome Message revealed after typing with soft slide & fade */}
-                {!isTyping && (
-                  <motion.div
-                    className="flex items-start gap-3"
-                    initial={{ opacity: 0, y: 14 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.45, ease: MOTION_EASINGS.default }}
-                  >
-                    <div className="w-8 h-8 rounded-full bg-brand-purple text-brand-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
-                      <Bot className="w-4 h-4" aria-hidden="true" />
-                    </div>
-                    <div className="bg-brand-white p-4 rounded-2xl rounded-tl-xs border border-brand-purple/10 text-xs text-brand-text/85 leading-relaxed shadow-2xs">
-                      <p className="font-semibold text-brand-navy mb-1">
-                        Welcome to Yacht Properties (Pty) Ltd
-                      </p>
-                      <p>
-                        We can assist with queries on our construction disciplines, property management mandates, and project consultations. Please submit your brief through the enquiry form, or reach our direct office line below.
-                      </p>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Example Query Prompts (shell) */}
-                <div className="pl-11 space-y-2">
-                  <span className="text-[11px] uppercase tracking-wider font-semibold text-brand-text/50 block">
-                    Common Topics
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {['CIDB & NHBRC scope', 'Property management rates', 'Falcon Haven office'].map((topic) => (
-                      <span
-                        key={topic}
-                        className="text-[11px] bg-brand-white px-3 py-1.5 rounded-full border border-brand-purple/10 text-brand-text/75"
-                      >
-                        {topic}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Notice Banner */}
-              <div className="bg-brand-gold/10 border border-brand-gold/30 rounded-xl p-3 flex items-start gap-2.5 text-xs text-brand-text/80">
-                <AlertCircle className="w-4 h-4 text-brand-gold shrink-0 mt-0.5" aria-hidden="true" />
-                <span>
-                  Assistant interface is in preparation. Backend conversational endpoints can be plugged directly into this shell without layout changes.
-                </span>
-              </div>
-            </div>
-
-            {/* Chat Input Shell (Disabled appearance as specified) */}
-            <div className="p-4 bg-brand-white border-t border-brand-purple/10 relative z-10">
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <input
-                    type="text"
-                    disabled
-                    placeholder="Assistant coming online..."
-                    aria-label="Assistant input coming online"
-                    className="w-full min-h-[44px] pl-4 pr-10 rounded-lg bg-brand-offwhite/80 border border-brand-purple/15 text-brand-text/50 text-xs italic cursor-not-allowed select-none focus:outline-none"
-                  />
-                  <MessageSquare className="w-4 h-4 text-brand-text/30 absolute right-3 top-3.5" aria-hidden="true" />
-                </div>
-                <button
-                  type="button"
-                  disabled
-                  aria-label="Send message (disabled)"
-                  className="min-h-[44px] min-w-[44px] rounded-lg bg-brand-text/10 text-brand-text/30 flex items-center justify-center cursor-not-allowed"
-                >
-                  <Send className="w-4 h-4" />
-                </button>
-              </div>
-              <p className="text-[10px] text-brand-text/50 text-center mt-2">
-                For prompt replies, call <a href={`tel:${siteContent.company.phoneTel}`} className="text-brand-purple font-semibold hover:underline">{siteContent.company.phone}</a>.
-              </p>
-            </div>
-          </motion.div>
+          {/* Right Column: Live AI Technical Operations Desk */}
+          <div className="lg:col-span-5 h-full">
+            <AiAgentChat onAutoFillEnquiry={handleAutoFillEnquiry} />
+          </div>
 
         </div>
 
       </div>
+
+      {/* Automated Triage & Statutory Audit Pipeline Modal */}
+      {triageModalOpen && (
+        <AutomatedTriageModal
+          isOpen={triageModalOpen}
+          onClose={() => setTriageModalOpen(false)}
+          enquiryData={formData}
+          triageData={triageResult}
+          ticketId={ticketId}
+        />
+      )}
     </section>
   );
 };

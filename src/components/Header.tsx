@@ -28,7 +28,7 @@ export const Header: React.FC = () => {
 
   // Track active section via IntersectionObserver
   useEffect(() => {
-    const sectionIds = ['home', 'services', 'credentials', 'contact', 'enquiry'];
+    const sectionIds = ['home', 'services', 'gallery', 'credentials', 'contact', 'enquiry'];
     const observers: IntersectionObserver[] = [];
 
     sectionIds.forEach((id) => {

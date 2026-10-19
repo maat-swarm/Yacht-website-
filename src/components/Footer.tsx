@@ -5,10 +5,12 @@ import { GoldRule } from './GoldRule';
 import { AnimatedWaveDivider } from './AnimatedWaveDivider';
 import { useMotionIntensity } from '../motion/hooks';
 import { ArrowUp, Phone, Mail, MapPin } from 'lucide-react';
+import { DeveloperModal } from '../developer/DeveloperModal';
 
 export const Footer: React.FC = () => {
   const intensity = useMotionIntensity();
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [isDevModalOpen, setIsDevModalOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -149,12 +151,27 @@ export const Footer: React.FC = () => {
           <p>
             &copy; {new Date().getFullYear()} {siteContent.company.legalName}. {siteContent.footer.copyrightNote}
           </p>
-          <p className="text-brand-white/50 text-[11px] tracking-wide">
-            {siteContent.footer.attribution}
-          </p>
+          <div className="flex items-center gap-4 text-brand-white/50 text-[11px] tracking-wide">
+            <span>{siteContent.footer.attribution}</span>
+            <span className="text-brand-white/20">|</span>
+            <button
+              type="button"
+              onClick={() => setIsDevModalOpen(true)}
+              className="text-brand-white/30 hover:text-brand-gold text-[10px] tracking-wider transition-colors cursor-pointer select-none font-mono"
+              data-interactive="true"
+            >
+              Developer
+            </button>
+          </div>
         </div>
 
       </div>
+
+      {/* Developer Operations Console Modal */}
+      <DeveloperModal
+        isOpen={isDevModalOpen}
+        onClose={() => setIsDevModalOpen(false)}
+      />
 
       {/* Floating Circular Gold-outlined "Back to Top" Button */}
       <AnimatePresence>

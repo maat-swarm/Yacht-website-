@@ -40,6 +40,7 @@ export const siteContent = {
   navigation: [
     { label: 'Home', href: '#home' },
     { label: 'Services', href: '#services' },
+    { label: 'Gallery', href: '#gallery' },
     { label: 'Credentials', href: '#credentials' },
     { label: 'Contact', href: '#contact' },
   ],

@@ -12,6 +12,7 @@ import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { Services } from './components/Services';
 import { Purpose } from './components/Purpose';
+import { GallerySection } from './gallery/GallerySection';
 import { Credentials } from './components/Credentials';
 import { EnquirySection } from './components/EnquirySection';
 import { Contact } from './components/Contact';
@@ -34,11 +35,15 @@ export default function App() {
       {/* Desktop Custom Cursor */}
       <CustomCursor />
 
+      {/* Floating AI Agent Launcher */}
+      <FloatingAgentLauncher />
+
       {/* Main Single-Page Layout */}
       <Header />
       <main className="flex-1">
         <Hero />
         <Services />
+        <GallerySection />
         <Purpose />
         <Credentials />
         <EnquirySection />

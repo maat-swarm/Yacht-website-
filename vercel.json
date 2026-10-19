@@ -1,5 +1,12 @@
 {
   "rewrites": [
-    { "source": "/api/pa/chat", "destination": "/api/pa-chat" }
+    {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    },
+    {
+      "source": "/((?!api/|.*\\.[\\w]+$).*)",
+      "destination": "/index.html"
+    }
   ]
 }
