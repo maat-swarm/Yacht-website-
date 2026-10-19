@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-const MODEL = 'llama-3.3-70b-versatile';
+const MODEL = 'openai/gpt-oss-120b';
 
 const YACHT_SYSTEM_PROMPT = `You are Yacht Concierge, the official AI assistant for Yacht Properties (Pty) Ltd — a South African property and construction company.
 
@@ -123,7 +123,7 @@ app.post('/api/pa/chat', async (req, res) => {
     const gr = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + gkey },
-      body: JSON.stringify({ model: 'llama-3.3-70b-versatile', temperature: 0.3, messages: [{ role: 'system', content: system }, ...msgs] })
+      body: JSON.stringify({ model: 'openai/gpt-oss-120b', temperature: 0.3, messages: [{ role: 'system', content: system }, ...msgs] })
     });
     const gj: any = await gr.json();
     if (!gr.ok) return res.status(gr.status).json({ error: gj });

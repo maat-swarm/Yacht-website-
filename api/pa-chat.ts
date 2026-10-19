@@ -32,7 +32,7 @@ export default async function handler(req: any, res: any) {
     const gr = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + gkey },
-      body: JSON.stringify({ model: 'llama-3.3-70b-versatile', temperature: 0.3, messages: [{ role: 'system', content: system }, ...msgs] })
+      body: JSON.stringify({ model: 'openai/gpt-oss-120b', temperature: 0.3, messages: [{ role: 'system', content: system }, ...msgs] })
     });
     const gj: any = await gr.json();
     if (!gr.ok) return res.status(gr.status).json({ error: gj });
