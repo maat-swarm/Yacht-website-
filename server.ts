@@ -80,7 +80,12 @@ async function startServer() {
   });
 
   // Visitor chat
-  app.post('/api/research', async (req, res) => {
+  app.post('/api/pa-auth', (req, res) => {
+  const expected = process.env.PA_PASSPHRASE || 'yacht2024';
+  res.json({ ok: (req.body?.pass || '') === expected });
+});
+
+app.post('/api/research', async (req, res) => {
   try {
     const { query, focus } = req.body || {};
     const key = process.env.PERPLEXITY_API_KEY;
