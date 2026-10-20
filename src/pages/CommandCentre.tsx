@@ -349,7 +349,7 @@ export const CommandCentre: React.FC = () => {
                 onChange={(e) => handlePinChange(i, e.target.value)}
                 onKeyDown={(e) => handlePinKeyDown(i, e)}
                 disabled={submittingPin}
-                className="w-12 h-14 text-center text-2xl font-bold bg-brand-navy border-2 border-brand-purple/40 focus:border-brand-gold rounded-xl text-brand-white outline-none transition-colors"
+                className="w-12 h-14 text-center text-2xl font-bold bg-brand-navy border-2 border-white/40 focus:border-brand-gold rounded-xl text-brand-white outline-none transition-colors"
                 autoComplete="off"
               />
             ))}
