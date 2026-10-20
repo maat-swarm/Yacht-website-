@@ -29,15 +29,8 @@ interface GalleryImage {
 export const CommandCentre: React.FC = () => {
   // Authentication State
   const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
-  const [pinDigits, setPinDigits] = useState<string[]>(['', '', '', '']);
-  const [pinError, setPinError] = useState<boolean>(false);
-  const [submittingPin, setSubmittingPin] = useState<boolean>(false);
-  const pinInputRefs = [
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-  ];
+  const [password, setPassword] = useState<string>('');
+  const [passwordError, setPasswordError] = useState<boolean>(false);
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<'concierge' | 'leads' | 'gallery' | 'tenders' | 'site'>('concierge');
@@ -78,67 +71,17 @@ export const CommandCentre: React.FC = () => {
     }
   }, []);
 
-  // Auto-focus first PIN input if not authorized
-  useEffect(() => {
-    if (!isAuthorized) {
-      setTimeout(() => {
-        pinInputRefs[0]?.current?.focus();
-      }, 100);
-    }
-  }, [isAuthorized]);
-
-  // Handle PIN input change & auto-advance
-  const handlePinChange = (index: number, val: string) => {
-    const digit = val.slice(-1);
-    const newDigits = [...pinDigits];
-    newDigits[index] = digit;
-    setPinDigits(newDigits);
-    setPinError(false);
-
-    if (digit && index < 3) {
-      pinInputRefs[index + 1]?.current?.focus();
-    }
-
-    if (index === 3 && digit) {
-      const fullPin = newDigits.join('');
-      submitPin(fullPin);
-    }
-  };
-
-  const handlePinKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !pinDigits[index] && index > 0) {
-      pinInputRefs[index - 1]?.current?.focus();
-    }
-  };
-
-  const submitPin = async (code: string) => {
-    setSubmittingPin(true);
-    try {
-      const res = await fetch('/api/cmd/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: code }),
-      });
-      const data = await res.json();
-      if (data?.authorised) {
-        sessionStorage.setItem(
-          'yacht_cmd',
-          JSON.stringify({ ok: true, exp: Date.now() + 28800000 }) // 8 hours
-        );
-        setIsAuthorized(true);
-        setPinError(false);
-      } else {
-        setPinError(true);
-        setPinDigits(['', '', '', '']);
-        setTimeout(() => {
-          pinInputRefs[0]?.current?.focus();
-        }, 100);
-      }
-    } catch {
-      setPinError(true);
-      setPinDigits(['', '', '', '']);
-    } finally {
-      setSubmittingPin(false);
+  const handlePasswordSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (password === 'Yacht2024') {
+      sessionStorage.setItem(
+        'yacht_cmd',
+        JSON.stringify({ ok: true, exp: Date.now() + 28800000 })
+      );
+      setIsAuthorized(true);
+      setPasswordError(false);
+    } else {
+      setPasswordError(true);
     }
   };
 
@@ -314,7 +257,7 @@ export const CommandCentre: React.FC = () => {
   }, [isAuthorized, activeTab]);
 
   // ==========================================
-  // PIN LOCK SCREEN
+  // PASSWORD LOCK SCREEN
   // ==========================================
   if (!isAuthorized) {
     return (
@@ -336,31 +279,34 @@ export const CommandCentre: React.FC = () => {
             Authorised access only
           </p>
 
-          {/* PIN Digits Input Row */}
-          <div className={`flex items-center gap-3 mb-4 ${pinError ? 'animate-shake' : ''}`}>
-            {pinDigits.map((digit, i) => (
-              <input
-                key={i}
-                ref={pinInputRefs[i]}
-                type="password"
-                inputMode="numeric"
-                maxLength={1}
-                value={digit}
-                onChange={(e) => handlePinChange(i, e.target.value)}
-                onKeyDown={(e) => handlePinKeyDown(i, e)}
-                disabled={submittingPin}
-                className="w-12 h-14 text-center text-2xl font-bold bg-brand-navy border-2 border-white/40 focus:border-brand-gold rounded-xl text-brand-white outline-none transition-colors"
-                autoComplete="off"
-              />
-            ))}
-          </div>
+          {/* Password Form */}
+          <form onSubmit={handlePasswordSubmit} className="flex flex-col items-center w-full">
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setPasswordError(false);
+              }}
+              placeholder="Enter password"
+              className="bg-brand-navy border border-brand-gold/40 text-brand-white rounded-xl px-4 py-3 text-center w-64 outline-none focus:border-brand-gold transition-colors"
+              autoFocus
+              autoComplete="current-password"
+            />
 
-          {/* Error Message */}
-          {pinError && (
-            <p className="text-brand-scarlet text-sm font-medium mb-4 animate-fade-in">
-              Incorrect PIN
-            </p>
-          )}
+            {passwordError && (
+              <p className="text-brand-scarlet text-sm font-medium mt-2 animate-fade-in">
+                Incorrect password
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="bg-brand-scarlet text-brand-white px-8 py-3 rounded-xl font-semibold mt-3 cursor-pointer hover:bg-brand-scarlet/90 transition-colors"
+            >
+              Submit
+            </button>
+          </form>
 
           <div className="mt-6 pt-6 border-t border-brand-purple/20 w-full text-center">
             <a

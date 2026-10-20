@@ -130,13 +130,6 @@ app.post('/api/pa-auth', (req: Request, res: Response) => {
   res.json({ ok: String(provided).trim() === expected });
 });
 
-// Command Centre Authentication
-app.post('/api/cmd/auth', (req: Request, res: Response) => {
-  const { pin } = req.body || {};
-  const expectedPin = process.env.CMD_PIN || '2024';
-  res.json({ authorised: String(pin).trim() === expectedPin });
-});
-
 // Analytics tracking
 app.post('/api/track', (_req: Request, res: Response) => {
   paStats.visits++;
