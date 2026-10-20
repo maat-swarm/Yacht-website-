@@ -13,7 +13,7 @@ import { Credentials } from './components/Credentials';
 import { EnquirySection } from './components/EnquirySection';
 import { Contact } from './components/Contact';
 import { Footer } from './components/Footer';
-import { FloatingAgentLauncher } from './components/FloatingAgentLauncher';
+import { BottomBar } from './components/BottomBar';
 
 export default function App() {
   const [introFinished, setIntroFinished] = useState(false);
@@ -24,7 +24,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-brand-offwhite text-brand-text font-sans selection:bg-brand-purple/20 selection:text-brand-purple relative">
+    <div className="min-h-screen flex flex-col bg-brand-offwhite text-brand-text font-sans selection:bg-brand-purple/20 selection:text-brand-purple relative pb-16">
       {/* Living Atmospheric Background (fixed behind all content) */}
       <LivingBackground />
 
@@ -36,12 +36,9 @@ export default function App() {
       {/* Desktop Custom Cursor */}
       <CustomCursor />
 
-      {/* Floating AI Agent Launcher */}
-      <FloatingAgentLauncher />
-
       {/* Main Single-Page Layout */}
       <Header />
-      <main className="flex-1">
+      <main className="flex-1 pb-16">
         <Hero />
         <Services />
         <GallerySection />
@@ -52,6 +49,7 @@ export default function App() {
       </main>
       <Footer />
       <PaPortal />
+      <BottomBar />
     </div>
   );
 }

@@ -118,7 +118,7 @@ export const AssistantTab: React.FC<AssistantTabProps> = ({ onNotify }) => {
             <span>AI Operations Desk & Knowledge Base</span>
           </h3>
           <p className="text-xs text-brand-white/60">
-            Control the conversational instructions, statutory knowledge parameters, and tone for the Gemini 3.8 Flash technical agent.
+            Control the conversational instructions, statutory knowledge parameters, and tone for the AI Assistant.
           </p>
         </div>
 
@@ -145,7 +145,7 @@ export const AssistantTab: React.FC<AssistantTabProps> = ({ onNotify }) => {
       <div className="bg-[#121226] border border-brand-purple/20 rounded-xl p-4 text-xs text-brand-white/80 space-y-2">
         <div className="flex items-center gap-2 font-semibold text-brand-gold">
           <Sparkles className="w-4 h-4" />
-          <span>Active Model: Google Gemini 3.8 Flash</span>
+          <span>Active Model: AI Assistant</span>
         </div>
         <p className="text-brand-white/60 leading-relaxed">
           The Assistant is connected to backend endpoints at <code className="text-brand-gold bg-brand-white/10 px-1 py-0.5 rounded">/api/chat</code>, <code className="text-brand-gold bg-brand-white/10 px-1 py-0.5 rounded">/api/agent/triage</code>, and <code className="text-brand-gold bg-brand-white/10 px-1 py-0.5 rounded">/api/agent/estimate</code>. When configured, the values below are synced with your Supabase database table <code className="text-brand-gold bg-brand-white/10 px-1 py-0.5 rounded">assistant_config</code>.

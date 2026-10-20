@@ -219,7 +219,7 @@ export const AiAgentChat: React.FC<AiAgentChatProps> = ({ onAutoFillEnquiry }) =
               </span>
             </div>
             <span className="text-[11px] text-brand-gold tracking-wider uppercase font-semibold">
-              Gemini 3.8 Flash • Falcon Haven Ops Desk
+              AI Assistant • Falcon Haven Ops Desk
             </span>
           </div>
         </div>

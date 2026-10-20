@@ -9,7 +9,7 @@ Priorities: 40% target project margin; recurring rental income; rural and townsh
 export default async function handler(req: any, res: any) {
   try {
     const { pin, messages } = req.body || {};
-    if ((pin || '') !== (process.env.PA_PIN || '4821')) return res.status(401).json({ error: 'bad pin' });
+    if ((pin || '') !== (process.env.CMD_PIN || '2024')) return res.status(401).json({ error: 'bad pin' });
     const msgs = Array.isArray(messages) ? messages.slice(-12) : [];
     if (!msgs.length) return res.status(200).json({ ok: true });
     const gkey = process.env.GROQ_API_KEY;

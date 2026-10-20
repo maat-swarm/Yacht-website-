@@ -112,8 +112,9 @@ app.post('/api/health', handleHealth);
 
 // PA Authentication
 app.post('/api/pa-auth', (req: Request, res: Response) => {
-  const expected = process.env.PA_PASSPHRASE || 'yacht2024';
-  res.json({ ok: (req.body?.pass || '') === expected });
+  const expected = process.env.CMD_PIN || '2024';
+  const provided = req.body?.pass || req.body?.pin || '';
+  res.json({ ok: String(provided).trim() === expected });
 });
 
 // Command Centre Authentication
@@ -472,7 +473,7 @@ app.patch('/api/content', async (req: Request, res: Response) => {
 app.post('/api/pa/chat', async (req: Request, res: Response) => {
   try {
     const { pin, messages } = req.body || {};
-    if ((pin || '') !== (process.env.PA_PIN || '4821')) {
+    if ((pin || '') !== (process.env.CMD_PIN || '2024')) {
       return res.status(401).json({ error: 'bad pin' });
     }
     const msgs = Array.isArray(messages) ? messages.slice(-12) : [];
