@@ -1,4 +1,5 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
+import type { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
@@ -35,7 +36,19 @@ const upload = multer({
 });
 
 // Initialize AI clients
-const ai = new GoogleGenAI();
+let ai: GoogleGenAI | null = null;
+try {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  if (apiKey) {
+    ai = new GoogleGenAI({ apiKey });
+  } else {
+    ai = new GoogleGenAI();
+  }
+} catch {
+  console.warn('[AI Studio] Gemini client initialized in offline/fallback mode until GEMINI_API_KEY is supplied.');
+  ai = null;
+}
+
 const GEMINI_MODEL = 'gemini-2.5-flash';
 const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null;
 
@@ -167,7 +180,7 @@ app.get('/api/gallery', async (_req: Request, res: Response) => {
 });
 
 // POST /api/gallery/upload
-app.post('/api/gallery/upload', upload.single('image'), async (req: Request, res: Response) => {
+app.post('/api/gallery/upload', upload.single('image') as any, async (req: Request, res: Response) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No image file uploaded' });
@@ -378,7 +391,7 @@ app.get('/api/tenders', async (req: Request, res: Response) => {
       if (Array.isArray(parsed?.tenders) && parsed.tenders.length > 0) {
         tendersList = parsed.tenders;
       }
-    } else {
+    } else if (ai) {
       // Fallback to Gemini if Groq is not configured
       const response = await ai.models.generateContent({
         model: GEMINI_MODEL,
@@ -527,6 +540,7 @@ RESEARCH:
 ${research || 'none fetched this turn'}`;
 
     try {
+      if (!ai) throw new Error('AI not configured');
       const prompt = msgs.map((m: any) => `${m.role === 'assistant' ? 'Assistant' : 'User'}: ${m.content}`).join('\n\n');
       const response = await withTimeout(
         ai.models.generateContent({
@@ -607,6 +621,7 @@ app.post('/api/chat', async (req: Request, res: Response) => {
       .join('\n\n');
 
     try {
+      if (!ai) throw new Error('AI not configured');
       const response = await withTimeout(
         ai.models.generateContent({
           model: GEMINI_MODEL,
@@ -710,6 +725,7 @@ Output a strictly valid JSON response with the following schema:
   "dispatchedTo": "Sam Maripane (Executive Desk)"
 }`;
 
+    if (!ai) throw new Error('AI not configured');
     const response = await withTimeout(
       ai.models.generateContent({
         model: GEMINI_MODEL,
@@ -769,6 +785,7 @@ Return strictly JSON:
   "preliminaryNotes": string
 }`;
 
+    if (!ai) throw new Error('AI not configured');
     const response = await withTimeout(
       ai.models.generateContent({
         model: GEMINI_MODEL,
@@ -872,6 +889,7 @@ Return strictly valid JSON:
 
 Use real, plausible South African organisations. Never invent contact details or phone numbers.`;
 
+    if (!ai) throw new Error('AI not configured');
     const response = await withTimeout(
       ai.models.generateContent({
         model: GEMINI_MODEL,
