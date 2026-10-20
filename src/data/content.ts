@@ -132,6 +132,6 @@ export const siteContent = {
 
   footer: {
     copyrightNote: 'All rights reserved.',
-    attribution: 'Demo preview prepared by CoreIQ Create',
+    attribution: 'Preview prepared by CoreIQ Create',
   },
 };

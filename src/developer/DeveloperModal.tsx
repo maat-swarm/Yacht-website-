@@ -183,7 +183,7 @@ export const DeveloperModal: React.FC<DeveloperModalProps> = ({ isOpen, onClose 
               <span className="text-[11px] text-brand-white/50">
                 {isSupabaseConfigured
                   ? 'Connected to Supabase Project'
-                  : 'Local Demo Environment (Supabase credentials pending)'}
+                  : 'Local Environment (Supabase credentials pending)'}
               </span>
             </div>
           </div>
@@ -295,7 +295,7 @@ export const DeveloperModal: React.FC<DeveloperModalProps> = ({ isOpen, onClose 
                   }}
                   className="text-xs text-brand-gold/80 hover:text-brand-gold underline transition-colors cursor-pointer"
                 >
-                  Bypass with Developer Demo Mode &rarr;
+                  Bypass with Developer Mode &rarr;
                 </button>
               </div>
             </div>

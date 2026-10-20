@@ -5,7 +5,7 @@ import { GoldRule } from './GoldRule';
 import { useMotionIntensity } from '../motion/hooks';
 import { MOTION_EASINGS } from '../motion/tokens';
 import { Send, CheckCircle, AlertCircle, Check } from 'lucide-react';
-import { AiAgentChat } from './AiAgentChat';
+import { AiAgentChat } from './EnquiryChatConsultant';
 import { AutomatedTriageModal, TriageResult } from './AutomatedTriageModal';
 import { supabase } from '../lib/supabaseClient';
 

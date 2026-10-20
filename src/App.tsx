@@ -1,10 +1,6 @@
-import { PaPortal } from './components/PaPortal';
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState } from 'react';
+import { CommandCentre } from './pages/CommandCentre';
+import { PaPortal } from './components/PaPortal';
 import { OpeningSequence } from './components/OpeningSequence';
 import { LivingBackground } from './components/LivingBackground';
 import { CustomCursor } from './components/CustomCursor';
@@ -21,6 +17,11 @@ import { FloatingAgentLauncher } from './components/FloatingAgentLauncher';
 
 export default function App() {
   const [introFinished, setIntroFinished] = useState(false);
+
+  // Check if current route is /command
+  if (typeof window !== 'undefined' && window.location.pathname === '/command') {
+    return <CommandCentre />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-offwhite text-brand-text font-sans selection:bg-brand-purple/20 selection:text-brand-purple relative">
@@ -51,7 +52,6 @@ export default function App() {
       </main>
       <Footer />
       <PaPortal />
-      <FloatingAgentLauncher />
     </div>
   );
 }

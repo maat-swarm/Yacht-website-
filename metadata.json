@@ -1,6 +1,6 @@
 {
   "name": "Yacht Properties",
-  "description": "Official demo website for Yacht Properties (Pty) Ltd, a premier South African property and construction company.",
+  "description": "Official website for Yacht Properties (Pty) Ltd, a premier South African property and construction company.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

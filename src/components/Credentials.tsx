@@ -176,6 +176,16 @@ export const Credentials: React.FC = () => {
                       Official certificates furnished upon tender qualification
                     </span>
                   </div>
+
+                  {cred.id === 'cidb' && (
+                    <a href="/certificates/cidb-certificate.pdf" download="Yacht-Properties-CIDB.pdf" className="inline-flex items-center gap-2 mt-3 px-4 py-2 border border-brand-gold/40 text-brand-gold text-xs font-semibold rounded-lg hover:bg-brand-gold/10 transition-colors">↓ Download Certificate</a>
+                  )}
+                  {cred.id === 'nhbrc' && (
+                    <a href="/certificates/nhbrc-certificate.pdf" download="Yacht-Properties-NHBRC.pdf" className="inline-flex items-center gap-2 mt-3 px-4 py-2 border border-brand-gold/40 text-brand-gold text-xs font-semibold rounded-lg hover:bg-brand-gold/10 transition-colors">↓ Download Certificate</a>
+                  )}
+                  {cred.id === 'ppra' && (
+                    <a href="/certificates/ppra-certificate.pdf" download="Yacht-Properties-PPRA.pdf" className="inline-flex items-center gap-2 mt-3 px-4 py-2 border border-brand-gold/40 text-brand-gold text-xs font-semibold rounded-lg hover:bg-brand-gold/10 transition-colors">↓ Download Certificate</a>
+                  )}
                 </div>
               </motion.div>
             );
