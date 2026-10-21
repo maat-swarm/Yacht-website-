@@ -15,13 +15,15 @@ export const GallerySection: React.FC = () => {
   useEffect(() => {
     async function loadGallery() {
       try {
-        const res = await fetch('/api/gallery');
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data?.images)) {
-            setImages(data.images);
-          }
+        const base = import.meta.env.VITE_SUPABASE_URL;
+      const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const res = await fetch(`${base}/rest/v1/gallery_items?select=image_url,title&published=eq.true&order=sort_order.asc`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+      if (res.ok) {
+        const rows = await res.json();
+        if (Array.isArray(rows)) {
+          setImages(rows.filter((r: any) => r.image_url).map((r: any) => ({ url: r.image_url, name: r.title || 'Project photo' })));
         }
+      }
       } catch (err) {
         console.warn('Failed to load gallery from server:', err);
       } finally {
