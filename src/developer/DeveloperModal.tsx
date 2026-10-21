@@ -6,6 +6,7 @@ import { LeadsTab } from './LeadsTab';
 import { ContentTab } from './ContentTab';
 import { AssistantTab } from './AssistantTab';
 import { SqlSetupTab } from './SqlSetupTab';
+import { DocumentsTab } from './DocumentsTab';
 import {
   X,
   Lock,
@@ -34,7 +35,7 @@ interface Toast {
 }
 
 export const DeveloperModal: React.FC<DeveloperModalProps> = ({ isOpen, onClose }) => {
-  const [activeTab, setActiveTab] = useState<'gallery' | 'leads' | 'content' | 'assistant' | 'sql'>('gallery');
+  const [activeTab, setActiveTab] = useState<'gallery' | 'leads' | 'content' | 'assistant' | 'sql' | 'docs'>('gallery');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState<boolean>(true);
@@ -357,7 +358,8 @@ export const DeveloperModal: React.FC<DeveloperModalProps> = ({ isOpen, onClose 
                 <span>AI Assistant Config</span>
               </button>
 
-              <button
+              <button type="button" onClick={() => setActiveTab('docs')} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer ${activeTab === 'docs' ? 'bg-brand-purple text-brand-white' : 'text-brand-white/70 hover:text-brand-white hover:bg-brand-white/5'}`}><FileEdit className="w-4 h-4 text-brand-gold" /><span>Documents</span></button>
+            <button
                 type="button"
                 onClick={() => setActiveTab('sql')}
                 className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all select-none whitespace-nowrap cursor-pointer ${
@@ -378,6 +380,7 @@ export const DeveloperModal: React.FC<DeveloperModalProps> = ({ isOpen, onClose 
               {activeTab === 'content' && <ContentTab onNotify={addToast} />}
               {activeTab === 'assistant' && <AssistantTab onNotify={addToast} />}
               {activeTab === 'sql' && <SqlSetupTab onNotify={addToast} />}
+              {activeTab === 'docs' && <DocumentsTab onNotify={addToast} />}
             </div>
           </div>
         )}
