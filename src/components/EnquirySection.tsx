@@ -49,13 +49,14 @@ export const EnquirySection: React.FC = () => {
     // Save lead to Supabase if configured
     if (supabase) {
       try {
-        await supabase.from('leads').insert({
-          name: data.fullName,
-          contact: data.contact,
-          need: `${data.service}: ${data.message}`,
-          source: 'Website Enquiry Form',
-          status: 'new',
-        });
+        const { error: leadErr } = await supabase.from('leads').insert({
+        full_name: data.fullName,
+        contact: data.contact,
+        service: data.service,
+        message: data.message,
+        status: 'new',
+      });
+      if (leadErr) console.warn('Lead save failed:', leadErr.message);
       } catch (err) {
         console.warn('Notice saving lead to Supabase:', err);
       }
