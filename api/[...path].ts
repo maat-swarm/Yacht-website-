@@ -142,7 +142,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
           body: JSON.stringify({
-            model: 'llama-3.1-8b-instant',
+            model: 'llama3-groq-70b-8192-tool-use-preview',
             temperature: 0.3,
             response_format: { type: 'json_object' },
             messages: [
