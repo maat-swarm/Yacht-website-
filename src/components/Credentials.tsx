@@ -8,6 +8,17 @@ import { ShieldCheck, Award } from 'lucide-react';
 
 export const Credentials: React.FC = () => {
   const intensity = useMotionIntensity();
+  const [docUrls, setDocUrls] = useState<Record<string, string>>({});
+  const REG: Record<string, string> = {"cidb":"10316208 (Grade 1 GB)","nhbrc":"4000003602","ppra":"20237146431"};
+  React.useEffect(() => {
+    const base = import.meta.env.VITE_SUPABASE_URL;
+    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    if (!base || !key) return;
+    fetch(base + '/rest/v1/documents?select=key,file_url', { headers: { apikey: key, Authorization: 'Bearer ' + key } })
+      .then(r => r.ok ? r.json() : [])
+      .then((rows: any[]) => { const m: Record<string, string> = {}; rows.forEach(r => { if (r.file_url) m[r.key] = r.file_url; }); setDocUrls(m); })
+      .catch(() => {});
+  }, []);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
   return (
@@ -170,7 +181,7 @@ export const Credentials: React.FC = () => {
                       />
                     )}
                     <span className="text-xs font-mono text-brand-text/70 font-medium block relative z-10">
-                      {cred.regPlaceholder}
+                      {REG[cred.id] ? 'Reg. No: ' + REG[cred.id] : cred.regPlaceholder}
                     </span>
                     <span className="text-[11px] text-brand-text/50 mt-1 block relative z-10">
                       Official certificates furnished upon tender qualification
@@ -178,13 +189,13 @@ export const Credentials: React.FC = () => {
                   </div>
 
                   {cred.id === 'cidb' && (
-                    <a href="/certificates/cidb-certificate.pdf" download="Yacht-Properties-CIDB.pdf" className="inline-flex items-center gap-2 mt-3 px-4 py-2 border border-brand-gold/40 text-brand-gold text-xs font-semibold rounded-lg hover:bg-brand-gold/10 transition-colors">↓ Download Certificate</a>
+                    <a href={docUrls.cidb || "/certificates/cidb-certificate.pdf"} download="Yacht-Properties-CIDB.pdf" className="inline-flex items-center gap-2 mt-3 px-4 py-2 border border-brand-gold/40 text-brand-gold text-xs font-semibold rounded-lg hover:bg-brand-gold/10 transition-colors">↓ Download Certificate</a>
                   )}
                   {cred.id === 'nhbrc' && (
-                    <a href="/certificates/nhbrc-certificate.pdf" download="Yacht-Properties-NHBRC.pdf" className="inline-flex items-center gap-2 mt-3 px-4 py-2 border border-brand-gold/40 text-brand-gold text-xs font-semibold rounded-lg hover:bg-brand-gold/10 transition-colors">↓ Download Certificate</a>
+                    <a href={docUrls.nhbrc || "/certificates/nhbrc-certificate.pdf"} download="Yacht-Properties-NHBRC.pdf" className="inline-flex items-center gap-2 mt-3 px-4 py-2 border border-brand-gold/40 text-brand-gold text-xs font-semibold rounded-lg hover:bg-brand-gold/10 transition-colors">↓ Download Certificate</a>
                   )}
                   {cred.id === 'ppra' && (
-                    <a href="/certificates/ppra-certificate.pdf" download="Yacht-Properties-PPRA.pdf" className="inline-flex items-center gap-2 mt-3 px-4 py-2 border border-brand-gold/40 text-brand-gold text-xs font-semibold rounded-lg hover:bg-brand-gold/10 transition-colors">↓ Download Certificate</a>
+                    <a href={docUrls.ppra || "/certificates/ppra-certificate.pdf"} download="Yacht-Properties-PPRA.pdf" className="inline-flex items-center gap-2 mt-3 px-4 py-2 border border-brand-gold/40 text-brand-gold text-xs font-semibold rounded-lg hover:bg-brand-gold/10 transition-colors">↓ Download Certificate</a>
                   )}
                 </div>
               </motion.div>
